@@ -9,9 +9,10 @@ import (
 /*
 Emit on the broadcast network address
 */
-func discoveryRequestSender(socketID int) {
+func discoveryRequestSender(socketID int, ip net.IP) {
+	fmt.Printf("Envoi requete ip = %s\n", ip.String())
 	conn, err := net.DialUDP("udp", nil, &net.UDPAddr{
-		IP:   net.IPv4bcast, // 255.255.255.255
+		IP:   ip,
 		Port: 9999,
 	})
 
@@ -38,50 +39,33 @@ func discoveryRequestSender(socketID int) {
 }
 
 func SenderLoop(socketID int) {
-	discoveryRequestSender(socketID)
-
-	interfaces, err := net.Interfaces()
+	ifaces, err := net.Interfaces()
 	if err != nil {
-		fmt.Printf("Erreur lors de la récupération des interfaces réseau : %v\n", err)
-		return
+		panic(err)
 	}
 
-	previousAddrs := make(map[string][]string)
-
-	for {
-		for _, iface := range interfaces {
-			addrs, err := iface.Addrs()
-			if err != nil {
-				fmt.Printf("Erreur lors de la récupération des adresses pour l'interface %s : %v\n", iface.Name, err)
-				continue
-			}
-
-			currentAddrs := []string{}
-			for _, addr := range addrs {
-				currentAddrs = append(currentAddrs, addr.String())
-			}
-
-			// Check for changes in IP addresses
-			if prev, exists := previousAddrs[iface.Name]; !exists || !equalSlices(prev, currentAddrs) {
-				fmt.Printf("Changement détecté sur l'interface %s\n", iface.Name)
-				previousAddrs[iface.Name] = currentAddrs
-				discoveryRequestSender(socketID)
-			}
+	for _, iface := range ifaces {
+		addrs, err := iface.Addrs()
+		if err != nil {
+			continue
 		}
 
-		time.Sleep(5 * time.Second) // Adjust the interval as needed
-	}
-}
+		for _, addr := range addrs {
+			ipnet, ok := addr.(*net.IPNet)
+			if !ok || ipnet.IP.To4() == nil {
+				continue // ignore IPv6 ou adresses non-IPNet
+			}
 
-// Helper function to compare slices
-func equalSlices(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
+			ip := ipnet.IP.To4()
+			mask := ipnet.Mask
+
+			broadcast := make(net.IP, 4)
+			for i := 0; i < 4; i++ {
+				broadcast[i] = ip[i] | ^mask[i]
+			}
+
+			fmt.Printf("IP locale : %s\n", ip.String())
+			discoveryRequestSender(socketID, broadcast)
 		}
 	}
-	return true
 }
