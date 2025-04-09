@@ -49,7 +49,6 @@ func SenderLoop(socketID int) {
 	previousAddrs := make(map[string][]string)
 
 	for {
-		needSend := false
 		for _, iface := range interfaces {
 			addrs, err := iface.Addrs()
 			if err != nil {
@@ -66,12 +65,10 @@ func SenderLoop(socketID int) {
 			if prev, exists := previousAddrs[iface.Name]; !exists || !equalSlices(prev, currentAddrs) {
 				fmt.Printf("Changement détecté sur l'interface %s\n", iface.Name)
 				previousAddrs[iface.Name] = currentAddrs
-				needSend = true
+				discoveryRequestSender(socketID)
 			}
 		}
-		if needSend {
-			discoveryRequestSender(socketID) // Replace 1234 with the actual socketID
-		}
+
 		time.Sleep(5 * time.Second) // Adjust the interval as needed
 	}
 }
