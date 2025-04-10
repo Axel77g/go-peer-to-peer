@@ -13,10 +13,9 @@ func main() {
 
 	SOCKET_ID := rand.Intn(10000000)
 
-	peerUpdates := make(chan peer.Peer)
+	pm := peer.NewPeerManager()
 
-	go peer.ManagePeers(peerUpdates)
-	go discovery.ListenForDiscoverRequests(SOCKET_ID, peerUpdates)
+	go discovery.ListenForDiscoverRequests(SOCKET_ID, pm)
 	go discovery.SenderLoop(SOCKET_ID)
 	wg.Wait()
 }

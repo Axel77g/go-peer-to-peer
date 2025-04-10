@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func ListenForDiscoverRequests(socketID int, peerUpdates chan<- peer.Peer) {
+func ListenForDiscoverRequests(socketID int, pm *peer.PeerManager) {
 	addr := net.UDPAddr{
 		Port: 9999,
 		IP:   net.ParseIP("0.0.0.0"), // écoute sur toutes les interfaces
@@ -45,8 +45,14 @@ func ListenForDiscoverRequests(socketID int, peerUpdates chan<- peer.Peer) {
 					ID:   parts[1],
 					Addr: remoteAddr.String(),
 				}
-				peerUpdates <- peer                             // Send peer data to the channel
-				discoveryRequestSender(socketID, remoteAddr.IP) //send the discovery request to the peer
+				if pm.Has(peer) {
+					fmt.Println("Peer déjà connu, ignore la demande")
+					continue
+				} else {
+					fmt.Println("Ajout du peer à la liste des pairs")
+					pm.AddPeer(peer)                                // Ajoute le peer à la liste des pairs
+					discoveryRequestSender(socketID, remoteAddr.IP) //send the discovery request to the peer
+				}
 			}
 		}
 
