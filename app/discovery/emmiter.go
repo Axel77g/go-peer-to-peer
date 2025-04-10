@@ -10,7 +10,6 @@ import (
 Emit on the broadcast network address
 */
 func discoveryRequestSender(socketID int, ip net.IP) {
-	fmt.Printf("Envoi requete ip = %s\n", ip.String())
 	conn, err := net.DialUDP("udp", nil, &net.UDPAddr{
 		IP:   ip,
 		Port: 9999,
@@ -34,8 +33,6 @@ func discoveryRequestSender(socketID int, ip net.IP) {
 		fmt.Printf("Erreur lors de l'envoi UDP : %v\n", err)
 		return
 	}
-
-	fmt.Println("→ Message DISCOVER_PEER_REQUEST émis en broadcast")
 }
 
 func SenderLoop(socketID int) {
@@ -64,7 +61,7 @@ func SenderLoop(socketID int) {
 				broadcast[i] = ip[i] | ^mask[i]
 			}
 
-			fmt.Printf("IP locale : %s\n", ip.String())
+			fmt.Printf("IP locale : %s | IP broadcast %s\n", ip.String(), broadcast.String())
 			discoveryRequestSender(socketID, broadcast)
 		}
 	}

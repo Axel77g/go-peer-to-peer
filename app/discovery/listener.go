@@ -36,7 +36,6 @@ func ListenForDiscoverRequests(socketID int, pm *peer.PeerManager) {
 		parts := strings.Split(message, ":")
 		if len(parts) > 1 {
 			if parts[1] == fmt.Sprintf("%d", socketID) {
-				fmt.Println("-> Ignore le message")
 				continue
 			}
 			if parts[0] == "DISCOVER_PEER_REQUEST" {
