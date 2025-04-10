@@ -45,7 +45,8 @@ func ListenForDiscoverRequests(socketID int, peerUpdates chan<- peer.Peer) {
 					ID:   parts[1],
 					Addr: remoteAddr.String(),
 				}
-				peerUpdates <- peer // Send peer data to the channel
+				peerUpdates <- peer                             // Send peer data to the channel
+				discoveryRequestSender(socketID, remoteAddr.IP) //send the discovery request to the peer
 			}
 		}
 
