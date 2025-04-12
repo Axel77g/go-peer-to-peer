@@ -18,12 +18,11 @@ func (socket *TCPServerSocket) ListenForMessage(ts *TCPServer, conn net.Conn) {
 		message, err := ReceiveTCPMessage(conn)
 		if err != nil{
 			if err == io.EOF{
-				log.Println("Connection closed by peer: ", socket.Identifier)
-				ts.handleDeconnection(conn)
+				log.Println("Read end connection closed", socket.Identifier)
 				break
 			}
 
-			log.Fatalln("Error while receiving message: ", err)
+			log.Println("Error while receiving message: ", err)
 			break
 		}
 		
