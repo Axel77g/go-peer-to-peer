@@ -1,6 +1,7 @@
 package tcpcomunication
 
 import (
+	"io"
 	"log"
 	"net"
 )
@@ -16,6 +17,12 @@ func (socket *TCPServerSocket) ListenForMessage(ts *TCPServer, conn net.Conn) {
 	for {
 		message, err := ReceiveTCPMessage(conn)
 		if err != nil{
+			if err == io.EOF{
+				log.Println("Connection closed by peer: ", socket.Identifier)
+				ts.handleDeconnection(conn)
+				break
+			}
+
 			log.Fatalln("Error while receiving message: ", err)
 			break
 		}
