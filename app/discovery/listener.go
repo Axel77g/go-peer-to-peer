@@ -5,12 +5,13 @@ import (
 	"log"
 	"net"
 	"peer-to-peer/app/peer"
+	"peer-to-peer/app/shared"
 	"strings"
 )
 
-func ListenForDiscoverRequests(socketID int, pm *peer.PeerManager) {
+func Listen(socketID int, pm *peer.PeerManager) {
 	addr := net.UDPAddr{
-		Port: 9999,
+		Port: shared.UDPPort,
 		IP:   net.IPv4zero,
 	}
 
@@ -43,7 +44,6 @@ func ListenForDiscoverRequests(socketID int, pm *peer.PeerManager) {
 				peer := peer.NewPeer(
 					parts[1], 
 					remoteAddr.IP,
-					0,
 				)
 				pm.SignalPeer(peer) // Ajoute le peer à la liste des pairs
 			}

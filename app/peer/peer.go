@@ -12,15 +12,10 @@ type Peer struct {
 	LastSeen time.Time
 }
 
-func NewPeer(id string, addr net.IP, tcpPort uint16) Peer {
+func NewPeer(id string, addr net.IP) Peer {
 	return Peer{
 		ID:       id,
 		Addr:     addr,
-		TCPPort:  tcpPort,
 		LastSeen: time.Now(),
 	}
-}
-
-func (peer *Peer) setTCPPort(port uint16) {
-	peer.TCPPort = port
 }
