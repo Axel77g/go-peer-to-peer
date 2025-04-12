@@ -25,7 +25,7 @@ func (pm *PeerManager) SignalPeer(peer Peer) {
 	pm.peers[peer.ID] = peer
 	pm.mu.Unlock()
 	if !exists { pm.Updates <- peer }
-	pm.PrintPeer()
+	//pm.PrintPeer()
 }
 
 func (pm *PeerManager) RemoveInactivePeers(timeout time.Duration) {
