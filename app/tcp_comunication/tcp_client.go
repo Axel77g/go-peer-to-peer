@@ -26,7 +26,7 @@ func (t *TCPClient) Connect() error {
 	}
 	t.Conn = conn
 	helloMessage := HelloMessage{
-		PeerID: t.Peer.ID,
+		PeerID: strconv.Itoa(shared.SOCKET_ID),
 	}
 	message, err := CreateTCPMessageJSON(MESSAGE_TYPE_HELLO, helloMessage)
 	if err != nil {

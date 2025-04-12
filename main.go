@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"math/rand"
 	"peer-to-peer/app/discovery"
 	filesystemwatcher "peer-to-peer/app/file_system_watcher"
 	filetransfering "peer-to-peer/app/file_transfering"
@@ -18,7 +17,8 @@ func main() {
 	wg := sync.WaitGroup{}
 	wg.Add(6)
 
-	SOCKET_ID := rand.Intn(10000000)
+	
+	log.Println("Socket ID:", shared.SOCKET_ID)
 
 	tcpServer := tcpcomunication.NewTCPServer()
 	peerManager := peer.NewPeerManager()
@@ -35,7 +35,7 @@ func main() {
 
 	go func(){
 		for peer := range peerManager.Updates {
-			//connect to the peer in TCP
+			log.Println("Peer mis à jour:", peer)
 			tcpClient := tcpcomunication.NewTCPClient(peer)
 			if err := tcpClient.Connect(); err != nil {
 				log.Println("Erreur de connexion au peer:", err)
