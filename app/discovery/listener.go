@@ -21,7 +21,7 @@ func ListenForDiscoverRequests(socketID int, pm *peer.PeerManager) {
 	}
 	defer conn.Close()
 
-	log.Println("Écoute UDP sur le port 9999...")
+	log.Println("Serveur de découverte UDP en écoute sur le port 9999")
 
 	buffer := make([]byte, 1024)
 
@@ -40,13 +40,11 @@ func ListenForDiscoverRequests(socketID int, pm *peer.PeerManager) {
 				continue
 			}
 			if parts[0] == "DISCOVER_PEER_REQUEST" {
-				log.Printf("Message DISCOVER_PEER_REQUEST reçu de %s\n", remoteAddr.String())
 				peer := peer.NewPeer(
 					parts[1], 
-					remoteAddr.String(),
+					remoteAddr.IP,
 					0,
 				)
-				log.Println("Ajout du peer à la liste des pairs")
 				pm.SignalPeer(peer) // Ajoute le peer à la liste des pairs
 			}
 		}

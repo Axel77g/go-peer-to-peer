@@ -1,15 +1,18 @@
 package peer
 
-import "time"
+import (
+	"net"
+	"time"
+)
 
 type Peer struct {
 	ID       string
-	Addr     string
+	Addr     net.IP
 	TCPPort  uint16
 	LastSeen time.Time
 }
 
-func NewPeer(id, addr string, tcpPort uint16) Peer {
+func NewPeer(id string, addr net.IP, tcpPort uint16) Peer {
 	return Peer{
 		ID:       id,
 		Addr:     addr,
