@@ -43,6 +43,8 @@ func (socket *TCPServerSocket) ListenForMessage(ts *TCPServer, conn net.Conn) {
 				continue
 			}
 
+			log.Println("Received message: ", jsonMessage)
+
 			switch jsonMessage.Type {
 				case MESSAGE_TYPE_HELLO:
 					hello, _ := ParseJSONMessage[HelloMessage](jsonMessage)
