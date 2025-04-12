@@ -3,6 +3,7 @@ package discovery
 import (
 	"fmt"
 	"net"
+	"peer-to-peer/app/peer"
 	"time"
 )
 
@@ -35,34 +36,19 @@ func discoveryRequestSender(socketID int, ip net.IP) {
 	}
 }
 
-func SenderLoop(socketID int) {
-	ifaces, err := net.Interfaces()
-	if err != nil {
-		panic(err)
-	}
-
-	for _, iface := range ifaces {
-		addrs, err := iface.Addrs()
-		if err != nil {
-			continue
-		}
-
-		for _, addr := range addrs {
-			ipnet, ok := addr.(*net.IPNet)
-			if !ok || ipnet.IP.To4() == nil {
-				continue // ignore IPv6 ou adresses non-IPNet
+func SenderLoop(socketID int, networkInterfaceManager *NetworkInterfaceManager, peerManager *peer.PeerManager) {
+	networkInterfaceManager.fetchInterfaces()
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			for _, ip := range networkInterfaceManager.AvailableIpInterface {
+				broadcastAddr := ip.getBroadcastAddress()
+				discoveryRequestSender(socketID, broadcastAddr)
+				networkInterfaceManager.fetchInterfaces()
 			}
-
-			ip := ipnet.IP.To4()
-			mask := ipnet.Mask
-
-			broadcast := make(net.IP, 4)
-			for i := 0; i < 4; i++ {
-				broadcast[i] = ip[i] | ^mask[i]
-			}
-
-			fmt.Printf("IP locale : %s | IP broadcast %s\n", ip.String(), broadcast.String())
-			discoveryRequestSender(socketID, broadcast)
+			peerManager.RemoveInactivePeers(10 * time.Second)
 		}
 	}
 }

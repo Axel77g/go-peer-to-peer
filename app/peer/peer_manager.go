@@ -3,11 +3,13 @@ package peer
 import (
 	"fmt"
 	"sync"
+	"time"
 )
 
 type Peer struct {
-	ID   string
-	Addr string
+	ID       string
+	Addr     string
+	LastSeen time.Time
 }
 
 type PeerManager struct {
@@ -23,21 +25,25 @@ func NewPeerManager() *PeerManager {
 	}
 }
 
-func (pm *PeerManager) AddPeer(peer Peer) {
+func (pm *PeerManager) SignalPeer(peer Peer) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
-
 	pm.peers[peer.ID] = peer
-	fmt.Printf("Peer ajouté/actualisé : %v\n", peer)
+	fmt.Printf("Peer ajouté/Actualisé : %v\n", peer)
 }
 
-func (pm *PeerManager) Has(peer Peer) bool {
-	//check if the map as the peer ID
+func (pm *PeerManager) GetPeers() map[string]Peer {
+	return pm.peers
+}
+
+func (pm *PeerManager) RemoveInactivePeers(timeout time.Duration) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
-	if _, ok := pm.peers[peer.ID]; ok {
-		return true
-	} else {
-		return false
+
+	for id, peer := range pm.peers {
+		if time.Since(peer.LastSeen) > timeout {
+			delete(pm.peers, id)
+			fmt.Printf("Peer supprimé : %v\n", peer)
+		}
 	}
 }

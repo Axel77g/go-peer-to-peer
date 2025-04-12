@@ -5,6 +5,7 @@ import (
 	"net"
 	"peer-to-peer/app/peer"
 	"strings"
+	"time"
 )
 
 func ListenForDiscoverRequests(socketID int, pm *peer.PeerManager) {
@@ -41,17 +42,12 @@ func ListenForDiscoverRequests(socketID int, pm *peer.PeerManager) {
 			if parts[0] == "DISCOVER_PEER_REQUEST" {
 				fmt.Printf("Message DISCOVER_PEER_REQUEST reçu de %s\n", remoteAddr.String())
 				peer := peer.Peer{
-					ID:   parts[1],
-					Addr: remoteAddr.String(),
+					ID:       parts[1],
+					Addr:     remoteAddr.String(),
+					LastSeen: time.Now(),
 				}
-				if pm.Has(peer) {
-					fmt.Println("Peer déjà connu, ignore la demande")
-					continue
-				} else {
-					fmt.Println("Ajout du peer à la liste des pairs")
-					pm.AddPeer(peer)                                // Ajoute le peer à la liste des pairs
-					discoveryRequestSender(socketID, remoteAddr.IP) //send the discovery request to the peer
-				}
+				fmt.Println("Ajout du peer à la liste des pairs")
+				pm.SignalPeer(peer) // Ajoute le peer à la liste des pairs
 			}
 		}
 
