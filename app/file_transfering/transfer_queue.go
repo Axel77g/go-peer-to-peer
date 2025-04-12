@@ -1,6 +1,7 @@
 package filetransfering
 
 import (
+	"log"
 	"sync"
 	"time"
 )
@@ -59,9 +60,9 @@ func (queue *TransferQueue) Loop() {
 
 			result := t.Start()
 			if result.Result {
-				println("Transfer réussi:", t.ID)
+				log.Println("Transfer réussi:", t.ID)
 			} else {
-				println("Transfer échoué:", t.ID)
+				log.Println("Transfer échoué:", t.ID)
 			}
 		}(transfer)
 	}

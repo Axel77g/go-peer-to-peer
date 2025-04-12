@@ -2,6 +2,7 @@ package discovery
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"peer-to-peer/app/peer"
 	"time"
@@ -17,21 +18,21 @@ func discoveryRequestSender(socketID int, ip net.IP) {
 	})
 
 	if err != nil {
-		fmt.Printf("Erreur de connexion UDP broadcast : %v\n", err)
+		log.Printf("Erreur de connexion UDP broadcast : %v\n", err)
 		return
 	}
 	defer conn.Close()
 
 	// Autoriser le broadcast (pas obligatoire dans Go, mais bonne pratique)
 	if err := conn.SetWriteDeadline(time.Now().Add(2 * time.Second)); err != nil {
-		fmt.Println("Erreur deadline UDP :", err)
+		log.Println("Erreur deadline UDP :", err)
 		return
 	}
 
 	message := []byte("DISCOVER_PEER_REQUEST:" + fmt.Sprintf("%d", socketID))
 	_, err = conn.Write(message)
 	if err != nil {
-		fmt.Printf("Erreur lors de l'envoi UDP : %v\n", err)
+		log.Printf("Erreur lors de l'envoi UDP : %v\n", err)
 		return
 	}
 }
