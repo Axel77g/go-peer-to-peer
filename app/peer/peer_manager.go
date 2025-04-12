@@ -21,8 +21,8 @@ func NewPeerManager() *PeerManager {
 
 func (pm *PeerManager) SignalPeer(peer Peer) {
 	pm.mu.Lock()
-	defer pm.mu.Unlock()
 	pm.peers[peer.ID] = peer
+	pm.mu.Unlock()
 	pm.PrintPeer()
 }
 
