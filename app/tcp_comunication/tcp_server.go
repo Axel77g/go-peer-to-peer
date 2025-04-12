@@ -1,6 +1,7 @@
 package tcpcomunication
 
 import (
+	"log"
 	"net"
 	"peer-to-peer/app/shared"
 	"strconv"
@@ -43,6 +44,7 @@ func (t *TCPServer) Listen() {
 func (t *TCPServer) handleConnection(conn net.Conn) {
 	defer t.handleDeconnection(conn)
 	
+	log.Println("[TCPServer] New connection from ", conn.RemoteAddr().String())
 	identifier := conn.RemoteAddr().String()
 	
 	t.mu.Lock()
@@ -57,6 +59,7 @@ func (t *TCPServer) handleConnection(conn net.Conn) {
 }
 
 func (t *TCPServer) handleDeconnection(conn net.Conn) {
+	log.Println("[TCPServer] Socket deconnection")
 	identifier := conn.RemoteAddr().String()
 	delete(t.sockets, identifier)
 	conn.Close()

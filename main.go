@@ -35,7 +35,12 @@ func main() {
 
 	go func(){
 		for peer := range peerManager.Updates {
-			log.Println("Peer mis à jour:", peer.ID, "à l'adresse:", peer.Addr.String())
+			//connect to the peer in TCP
+			tcpClient := tcpcomunication.NewTCPClient(peer)
+			if err := tcpClient.Connect(); err != nil {
+				log.Println("Erreur de connexion au peer:", err)
+				continue
+			}
 		}
 	}()
 

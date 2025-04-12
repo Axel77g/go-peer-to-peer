@@ -12,7 +12,7 @@ type TCPClient struct {
 	Peer peer.Peer
 }
 
-func NewTCPConnection(peer peer.Peer) TCPClient {
+func NewTCPClient(peer peer.Peer) TCPClient {
 	return TCPClient{
 		Conn: nil,
 		Peer: peer,
@@ -36,6 +36,6 @@ func (t *TCPClient) Connect() error {
 	if _, err := message.Send(t.Conn); err != nil {
 		return err
 	}
-	//defer t.Conn.Close()
+	defer t.Conn.Close()
 	return nil
 }
