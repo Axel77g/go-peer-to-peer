@@ -37,19 +37,21 @@ func discoveryRequestSender(socketID int, ip net.IP) {
 	}
 }
 
+func sender(networkInterfaceManager *NetworkInterfaceManager, socketID int) {
+	for _, ip := range networkInterfaceManager.AvailableIpInterface {
+		broadcastAddr := ip.getBroadcastAddress()
+		discoveryRequestSender(socketID, broadcastAddr)
+	}
+}
+
 func SenderLoop(socketID int, networkInterfaceManager *NetworkInterfaceManager, peerManager *peer.PeerManager) {
 	networkInterfaceManager.fetchInterfaces()
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
-	for {
-		select {
-		case <-ticker.C:
-			for _, ip := range networkInterfaceManager.AvailableIpInterface {
-				broadcastAddr := ip.getBroadcastAddress()
-				discoveryRequestSender(socketID, broadcastAddr)
-				networkInterfaceManager.fetchInterfaces()
-			}
-			peerManager.RemoveInactivePeers(10 * time.Second)
-		}
+
+	sender(networkInterfaceManager, socketID)
+	for range ticker.C {
+		sender(networkInterfaceManager, socketID)
+		peerManager.RemoveInactivePeers(10 * time.Second)
 	}
 }
