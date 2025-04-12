@@ -46,9 +46,9 @@ func main() {
 
 	go tcpServer.Listen()
 	go fileWatcher.Listen()
-	go discovery.Listen(SOCKET_ID, peerManager)
+	go discovery.Listen(shared.SOCKET_ID, peerManager)
 	
-	go discovery.SenderLoop(SOCKET_ID, networkInterfaceManager, peerManager)
+	go discovery.SenderLoop(shared.SOCKET_ID, networkInterfaceManager, peerManager)
 	go transferingQueue.Loop()
 
 	wg.Wait()
