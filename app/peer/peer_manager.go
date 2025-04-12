@@ -23,7 +23,7 @@ func (pm *PeerManager) SignalPeer(peer Peer) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
 	pm.peers[peer.ID] = peer
-	log.Printf("Peer ajouté/Actualisé : %d\n", peer.Addr)
+	pm.PrintPeer()
 }
 
 func (pm *PeerManager) RemoveInactivePeers(timeout time.Duration) {
@@ -33,7 +33,16 @@ func (pm *PeerManager) RemoveInactivePeers(timeout time.Duration) {
 	for id, peer := range pm.peers {
 		if time.Since(peer.LastSeen) > timeout {
 			delete(pm.peers, id)
-			log.Printf("Peer supprimé : %v\n", peer)
+			log.Printf("Peer %s removed due to inactivity\n", id)
 		}
+	}
+}
+
+func (pm *PeerManager) PrintPeer() {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+
+	for _, peer := range pm.peers {
+		log.Printf("Peer : %s, Addr : %s\n", peer.ID, peer.Addr.String())
 	}
 }
