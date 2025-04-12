@@ -56,6 +56,7 @@ func (socket *TCPServerSocket) ListenForMessage(ts *TCPServer, conn net.Conn) {
 					//compare the directory with the one in the peer
 			}
 
+			log.Printf("sockets %v", ts.sockets)
 			ts.mu.Unlock()
 		}
     }
