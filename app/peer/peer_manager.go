@@ -32,6 +32,9 @@ func NewPeerManager() *PeerManager {
 func (pm *PeerManager) SignalPeer(peer Peer) {
 	pm.mu.Lock()
 	_, exists := pm.peers[peer.ID]
+	if(exists){
+
+	}
 	pm.peers[peer.ID] = peer
 	pm.mu.Unlock()
 	if !exists { pm.Updates <- peer }
@@ -45,7 +48,7 @@ func (pm *PeerManager) UpdatePeer(peer Peer) {
 	if exists {
 		pm.peers[peer.ID] = peer
 	} else {
-		log.Printf("Peer %s not found for update\n", peer.ID)
+		log.Println("Trying to update a peer that does not exist")
 	}
 }
 
@@ -64,9 +67,8 @@ func (pm *PeerManager) RemoveInactivePeers(timeout time.Duration) {
 func (pm *PeerManager) PrintPeer() {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
-
 	for _, peer := range pm.peers {
-		log.Printf("Peer : %s, Addr : %s\n -> Socket  %v \n ", peer.ID, peer.Addr.String(), peer.TCPSocket)
+		log.Printf("Peer : %s, Addr : %s -> Socket  %v \n ", peer.ID, peer.Addr.String(), peer.TCPSocket)
 	}
 }
 

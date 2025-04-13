@@ -41,12 +41,15 @@ func Listen(socketID int, pm *peer.PeerManager) {
 				continue
 			}
 			if parts[0] == "DISCOVER_PEER_REQUEST" {
-				peer := peer.NewPeer(
-					parts[1], 
-					remoteAddr.IP,
-				)
-				pm.SignalPeer(peer) // Ajoute le peer à la liste des pairs
-			}
+				peerInstance, exist := pm.GetPeer(parts[1])
+				if !exist {
+					peerInstance = peer.NewPeer(
+						parts[1], 
+						remoteAddr.IP,
+					)
+				}
+				pm.SignalPeer(peerInstance)
+							}
 		}
 
 	}
