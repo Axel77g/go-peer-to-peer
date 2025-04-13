@@ -38,6 +38,17 @@ func (pm *PeerManager) SignalPeer(peer Peer) {
 	//pm.PrintPeer()
 }
 
+func (pm *PeerManager) UpdatePeer(peer Peer) {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+	_, exists := pm.peers[peer.ID]
+	if exists {
+		pm.peers[peer.ID] = peer
+	} else {
+		log.Printf("Peer %s not found for update\n", peer.ID)
+	}
+}
+
 func (pm *PeerManager) RemoveInactivePeers(timeout time.Duration) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
@@ -59,13 +70,9 @@ func (pm *PeerManager) PrintPeer() {
 	}
 }
 
-func (pm *PeerManager) GetPeer(id string) *Peer {
+func (pm *PeerManager) GetPeer(id string) (Peer, bool) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
-
 	peer, exists := pm.peers[id]
-	if(!exists) {
-		return nil
-	}
-	return &peer
+	return peer, exists
 }

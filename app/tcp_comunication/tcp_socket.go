@@ -1,7 +1,6 @@
 package tcpcomunication
 
 import (
-	"errors"
 	"io"
 	"log"
 	"net" // Renamed to avoid confusion, but no structural change here.
@@ -15,7 +14,7 @@ import (
 type TCPSocket struct {
 	RemoteAddr string
 	Conn net.Conn
-	Peer *peer.Peer // can be nil in the beginning (handshake not started and not finished), it must be a reference of peerManager peer
+	PeerID string // can be nil in the beginning (handshake not started and not finished), it must be a reference of peerManager peer
 }
 
 func (socket *TCPSocket) ListenMessage(conn net.Conn, mu *sync.Mutex) {
@@ -52,14 +51,13 @@ func (socket *TCPSocket) ListenMessage(conn net.Conn, mu *sync.Mutex) {
 				case MESSAGE_TYPE_HELLO:
 					hello, _ := ParseJSONMessage[HelloMessage](jsonMessage)
 					peerManager := peer.GetPeerManager()
-					peerRef := peerManager.GetPeer(hello.PeerID)
-					if peerRef == nil {
+					peerInstance,exist := peerManager.GetPeer(hello.PeerID)
+					if !exist {
 						log.Println("Peer not found, creating new peer")
-						newPeer := peer.NewPeer(hello.PeerID, conn.RemoteAddr().(*net.TCPAddr).IP)
-						peerManager.SignalPeer(newPeer) //signal only if the peer is new add it to the peer manager
-						peerRef = peerManager.GetPeer(hello.PeerID)
+						peerInstance = peer.NewPeer(hello.PeerID, conn.RemoteAddr().(*net.TCPAddr).IP)
+						peerManager.SignalPeer(peerInstance) //signal only if the peer is new add it to the peer manager
 					}
-					socket.setPeer(peerRef)
+					socket.setPeerID(peerInstance.ID)
 				case MESSAGE_TYPE_FILE_DIR:
 					dir, _ := ParseJSONMessage[FileDirMessage](jsonMessage)
 					log.Println("Received directory: ", dir.Files)
@@ -78,23 +76,16 @@ func (t *TCPSocket) Send(message TCPMessage) (bool, error) {
 	return message.Send(t.Conn)
 }
 
-func (t *TCPSocket) GetConn() (net.Conn, error) {
-	if t.Conn == nil {
-		return nil, errors.New("socket not connected")
-	}
-	return t.Conn, nil
-}
-
-func (t *TCPSocket) setPeer(peer *peer.Peer) {
-	t.Peer = peer
+func (t *TCPSocket) setPeerID(peer string) {
+	t.PeerID = peer
 }
 
 func (t *TCPSocket) HandshakeEnd() bool {
-	return t.Peer != nil
+	return t.PeerID != ""
 }
 
 
-func CreateTCPConnection(peer peer.Peer) (TCPSocket,error) {
+func CreateTCPConnection(peer *peer.Peer) (TCPSocket,error) {
 	conn, err := net.Dial("tcp", peer.Addr.String() + ":" + strconv.Itoa(shared.TCPPort))
 	if err != nil {
 		return TCPSocket{}, err
@@ -102,8 +93,9 @@ func CreateTCPConnection(peer peer.Peer) (TCPSocket,error) {
 	socket := TCPSocket{
 		RemoteAddr: conn.RemoteAddr().String(),
 		Conn: conn,
-		Peer: &peer,
+		PeerID: peer.ID,
 	}
+
 	helloMessage := HelloMessage{
 		PeerID: strconv.Itoa(shared.SOCKET_ID),
 	}

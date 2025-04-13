@@ -51,7 +51,7 @@ func (t *TCPServer) handleConnection(conn net.Conn) {
 	tcpPeerConn := TCPSocket{
 		RemoteAddr: remoteAddr,
 		Conn: conn,
-		Peer: nil, // wait for the peer to be sent (wait for handshake)
+		PeerID: "", // wait for the peer to be sent (wait for handshake)
 	}
 	t.sockets[remoteAddr] = tcpPeerConn	
 	t.mu.Unlock()

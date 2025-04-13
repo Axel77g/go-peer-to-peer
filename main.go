@@ -36,16 +36,16 @@ func main() {
 	go func(){
 		for peer := range peerManager.Updates {
 			log.Println("Peer mis à jour:", peer)
-			_, err := peer.TCPSocket.GetConn()
-			if err != nil {
+			if peer.TCPSocket != nil {
 				log.Println("Peer déjà connecté:", peer)
 				continue
 			}
-			_,err = tcpcomunication.CreateTCPConnection(peer)
+			socket,err := tcpcomunication.CreateTCPConnection(&peer)
 			if err != nil {
 				log.Println("Erreur de connexion au peer:", err)
 				continue
 			}
+			peer.TCPSocket = &socket
 		}
 	}()
 
