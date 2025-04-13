@@ -18,6 +18,7 @@ type TCPSocket struct {
 }
 
 func (socket *TCPSocket) ListenMessage(conn net.Conn, mu *sync.Mutex) {
+	defer socket.HandleDeconnection()
 	// Handle the message
 	for {
 		message, err := ReceiveTCPMessage(conn)
@@ -57,7 +58,9 @@ func (socket *TCPSocket) ListenMessage(conn net.Conn, mu *sync.Mutex) {
 						peerInstance = peer.NewPeer(hello.PeerID, conn.RemoteAddr().(*net.TCPAddr).IP)
 						peerManager.SignalPeer(peerInstance) //signal only if the peer is new add it to the peer manager
 					}
+					peerInstance.TCPSocket = socket
 					socket.setPeerID(peerInstance.ID)
+					peerManager.UpdatePeer(peerInstance)
 				case MESSAGE_TYPE_FILE_DIR:
 					dir, _ := ParseJSONMessage[FileDirMessage](jsonMessage)
 					log.Println("Received directory: ", dir.Files)
@@ -67,6 +70,28 @@ func (socket *TCPSocket) ListenMessage(conn net.Conn, mu *sync.Mutex) {
 			mu.Unlock()
 		}
     }
+}
+
+func (socket *TCPSocket) HandleDeconnection() {
+	if socket.Conn != nil {
+		socket.Conn.Close()
+	}
+	socket.Conn = nil
+	log.Println("Socket closed: ", socket.RemoteAddr)
+	peerManager := peer.GetPeerManager()
+	peer, exist := peerManager.GetPeer(socket.PeerID)
+	if exist {
+		peer.TCPSocket = nil
+		peerManager.UpdatePeer(peer)
+		log.Println("Peer disconnected: ", socket.PeerID)
+	}
+}
+
+func (t *TCPSocket) Close() {
+	if t.Conn != nil {
+		t.Conn.Close()
+	}
+	t.Conn = nil
 }
 
 func (t *TCPSocket) Send(message TCPMessage) (bool, error) {

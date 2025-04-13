@@ -42,26 +42,23 @@ func (t *TCPServer) Listen() {
 
 // go routine to handle the connection
 func (t *TCPServer) handleConnection(conn net.Conn) {
-	defer t.handleDeconnection(conn)
-	
 	log.Println("[TCPServer] New connection from ", conn.RemoteAddr().String())
 	remoteAddr := conn.RemoteAddr().String()
 	
 	t.mu.Lock()
-	tcpPeerConn := TCPSocket{
+	socket := TCPSocket{
 		RemoteAddr: remoteAddr,
 		Conn: conn,
 		PeerID: "", // wait for the peer to be sent (wait for handshake)
 	}
-	t.sockets[remoteAddr] = tcpPeerConn	
+	t.sockets[remoteAddr] = socket	
 	t.mu.Unlock()
 
-	tcpPeerConn.ListenMessage(conn, &t.mu)
+	socket.ListenMessage(conn, &t.mu)
+	t.removeSocket(socket)
 }
 
-func (t *TCPServer) handleDeconnection(conn net.Conn) {
-	log.Println("[TCPServer] Socket deconnection")
-	remoteAddr := conn.RemoteAddr().String()
-	delete(t.sockets, remoteAddr)
-	conn.Close()
+func (t *TCPServer) removeSocket(socket TCPSocket) {
+	log.Println("[TCPServer] Remove socket")
+	delete(t.sockets, socket.RemoteAddr)
 }
