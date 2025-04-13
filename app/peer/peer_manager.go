@@ -38,7 +38,6 @@ func (pm *PeerManager) SignalPeer(peer Peer) {
 	pm.peers[peer.ID] = peer
 	pm.mu.Unlock()
 	if !exists { pm.Updates <- peer }
-	pm.PrintPeer()
 }
 
 func (pm *PeerManager) UpdatePeer(peer Peer) {

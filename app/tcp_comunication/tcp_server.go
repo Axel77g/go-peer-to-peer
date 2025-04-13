@@ -49,7 +49,7 @@ func (t *TCPServer) handleConnection(conn net.Conn) {
 	socket := TCPSocket{
 		RemoteAddr: remoteAddr,
 		Conn: conn,
-		PeerID: "", // wait for the peer to be sent (wait for handshake)
+		PeerID: "UNKOWN", // wait for the peer to be sent (wait for handshake)
 	}
 	t.sockets[remoteAddr] = socket	
 	t.mu.Unlock()
@@ -59,6 +59,6 @@ func (t *TCPServer) handleConnection(conn net.Conn) {
 }
 
 func (t *TCPServer) removeSocket(socket TCPSocket) {
-	log.Println("[TCPServer] Remove socket")
+	log.Println("[TCPServer] Remove socket of peer: ", socket.PeerID)
 	delete(t.sockets, socket.RemoteAddr)
 }

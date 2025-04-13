@@ -54,7 +54,7 @@ func (socket *TCPSocket) ListenMessage(conn net.Conn, mu *sync.Mutex) {
 					peerManager := peer.GetPeerManager()
 					peerInstance,exist := peerManager.GetPeer(hello.PeerID)
 					if !exist {
-						log.Println("Peer not found, creating new peer")
+						log.Println("Receive HELLO from a peer that is not in the peer manager :", hello.PeerID)
 						peerInstance = peer.NewPeer(hello.PeerID, conn.RemoteAddr().(*net.TCPAddr).IP)
 						peerManager.SignalPeer(peerInstance) //signal only if the peer is new add it to the peer manager
 					}
@@ -77,7 +77,6 @@ func (socket *TCPSocket) HandleDeconnection() {
 		socket.Conn.Close()
 	}
 	socket.Conn = nil
-	log.Println("Socket closed: ", socket.RemoteAddr)
 	peerManager := peer.GetPeerManager()
 	peer, exist := peerManager.GetPeer(socket.PeerID)
 	if exist {
@@ -106,11 +105,12 @@ func (t *TCPSocket) setPeerID(peer string) {
 }
 
 func (t *TCPSocket) HandshakeEnd() bool {
-	return t.PeerID != ""
+	return t.PeerID != "UNKOWN"
 }
 
 
 func CreateTCPConnection(peer *peer.Peer) (TCPSocket,error) {
+	log.Println("Creating TCP (client) connection to peer: ", peer.ID)
 	conn, err := net.Dial("tcp", peer.Addr.String() + ":" + strconv.Itoa(shared.TCPPort))
 	if err != nil {
 		return TCPSocket{}, err
