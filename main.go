@@ -21,7 +21,7 @@ func main() {
 	log.Println("Socket ID:", shared.SOCKET_ID)
 
 	tcpServer := tcpcomunication.NewTCPServer()
-	peerManager := peer.NewPeerManager()
+	peerManager := peer.GetPeerManager()
 	transferingQueue := filetransfering.NewTransferQueue()
 	networkInterfaceManager := discovery.NewNetworkInterfaceManager()
 	fileEvents := make(chan filesystemwatcher.FileSystemEvent)
@@ -36,8 +36,13 @@ func main() {
 	go func(){
 		for peer := range peerManager.Updates {
 			log.Println("Peer mis à jour:", peer)
-			tcpClient := tcpcomunication.NewTCPClient(peer)
-			if err := tcpClient.Connect(); err != nil {
+			_, err := peer.TCPSocket.GetConn()
+			if err != nil {
+				log.Println("Peer déjà connecté:", peer)
+				continue
+			}
+			_,err = tcpcomunication.CreateTCPConnection(peer)
+			if err != nil {
 				log.Println("Erreur de connexion au peer:", err)
 				continue
 			}

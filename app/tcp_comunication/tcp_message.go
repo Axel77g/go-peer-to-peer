@@ -3,6 +3,7 @@ package tcpcomunication
 import (
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"net"
 )
 
@@ -20,13 +21,10 @@ func NewTCPMessage(size uint32, message []byte, received bool) TCPMessage {
 	}
 }
 
-func ParseJSONMessage[T any](jsonMessage *TCPMessageJSON) (*T, error) {
+func ParseJSONMessage[T any](jsonMessage TCPMessageJSON) (T, error) {
 	var payload T
 	err := json.Unmarshal(jsonMessage.Payload, &payload)
-	if err != nil {
-		return nil, err
-	}
-	return &payload, err
+	return payload, err
 }
 
 func (m *TCPMessage) Send(conn net.Conn) (bool, error) {
@@ -49,25 +47,25 @@ func (m *TCPMessage) IsJSON() bool {
 	return m.message[0] == '{' && m.message[len(m.message)-1] == '}'
 }
 
-func (m *TCPMessage) GetJSON() (*TCPMessageJSON, error) {
+func (m *TCPMessage) GetJSON() (TCPMessageJSON, error) {
 	if !m.IsJSON() {
-		return nil, nil
+		return TCPMessageJSON{}, errors.New("not a JSON message")
 	}
 
 	var messageJSON TCPMessageJSON
 	err := json.Unmarshal(m.message, &messageJSON)
 	if err != nil {
-		return nil, err
+		return TCPMessageJSON{}, err
 	}
 
-	return &messageJSON, nil
+	return messageJSON, nil
 }
 
-func ReceiveTCPMessage(conn net.Conn) (*TCPMessage, error) {
+func ReceiveTCPMessage(conn net.Conn) (TCPMessage, error) {
 	lenBuf := make([]byte, 4) // 4 octets pour la taille du message
 	_, err := conn.Read(lenBuf)
 	if err != nil {
-		return nil, err
+		return TCPMessage{}, err
 	}
 	msgLen := binary.BigEndian.Uint32(lenBuf)
 
@@ -75,17 +73,17 @@ func ReceiveTCPMessage(conn net.Conn) (*TCPMessage, error) {
 	msgBuf := make([]byte, msgLen)
 	_, err = conn.Read(msgBuf)
 	if err != nil {
-		return nil, err
+		return TCPMessage{}, err
 	}
 
 	message := NewTCPMessage(msgLen, msgBuf, true)
-	return &message, nil
+	return message, nil
 }
 
-func CreateTCPMessageJSON(messageType string, payload any) (*TCPMessage, error) {
+func CreateTCPMessageJSON(messageType string, payload any) (TCPMessage, error) {
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
-		return nil, err
+		return TCPMessage{}, err
 	}
 
 	message := TCPMessageJSON{
@@ -95,7 +93,7 @@ func CreateTCPMessageJSON(messageType string, payload any) (*TCPMessage, error) 
 	
 	jsonMessage, err := json.Marshal(message)
 	if err != nil {
-		return nil, err
+		return TCPMessage{}, err
 	}
 
 	tcpMessage := TCPMessage{
@@ -104,6 +102,6 @@ func CreateTCPMessageJSON(messageType string, payload any) (*TCPMessage, error) 
 		received: false,
 	}
 
-	return &tcpMessage, nil
+	return tcpMessage, nil
 }
 

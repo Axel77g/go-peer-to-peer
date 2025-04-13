@@ -8,16 +8,16 @@ import (
 	"sync"
 )
 
-type TCPServer struct {
+type TCPServer struct  {
 	Listener net.Listener
-	sockets map[string]TCPServerSocket
+	sockets map[string]TCPSocket
 	mu sync.Mutex
 }
 
 func NewTCPServer() *TCPServer {
 	return &TCPServer{
 		Listener: nil,
-		sockets: make(map[string]TCPServerSocket),
+		sockets: make(map[string]TCPSocket),
 		mu: sync.Mutex{},
 	}
 }
@@ -45,22 +45,23 @@ func (t *TCPServer) handleConnection(conn net.Conn) {
 	defer t.handleDeconnection(conn)
 	
 	log.Println("[TCPServer] New connection from ", conn.RemoteAddr().String())
-	identifier := conn.RemoteAddr().String()
+	remoteAddr := conn.RemoteAddr().String()
 	
 	t.mu.Lock()
-	tcpPeerConn := TCPServerSocket{
+	tcpPeerConn := TCPSocket{
+		RemoteAddr: remoteAddr,
 		Conn: conn,
-		PeerID: "", // wait for the peer ID to be sent (handshake)
+		Peer: nil, // wait for the peer to be sent (wait for handshake)
 	}
-	t.sockets[identifier] = tcpPeerConn	
+	t.sockets[remoteAddr] = tcpPeerConn	
 	t.mu.Unlock()
 
-	tcpPeerConn.ListenForMessage(t, conn)
+	tcpPeerConn.ListenMessage(conn, &t.mu)
 }
 
 func (t *TCPServer) handleDeconnection(conn net.Conn) {
 	log.Println("[TCPServer] Socket deconnection")
-	identifier := conn.RemoteAddr().String()
-	delete(t.sockets, identifier)
+	remoteAddr := conn.RemoteAddr().String()
+	delete(t.sockets, remoteAddr)
 	conn.Close()
 }

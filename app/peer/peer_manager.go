@@ -12,6 +12,16 @@ type PeerManager struct {
 	mu      sync.Mutex
 }
 
+var instance *PeerManager
+var once sync.Once
+
+func GetPeerManager() *PeerManager {
+	once.Do(func() {
+		instance = NewPeerManager()
+	})
+	return instance
+}
+
 func NewPeerManager() *PeerManager {
 	return &PeerManager{
 		peers:   make(map[string]Peer),
@@ -47,4 +57,15 @@ func (pm *PeerManager) PrintPeer() {
 	for _, peer := range pm.peers {
 		log.Printf("Peer : %s, Addr : %s\n", peer.ID, peer.Addr.String())
 	}
+}
+
+func (pm *PeerManager) GetPeer(id string) *Peer {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+
+	peer, exists := pm.peers[id]
+	if(!exists) {
+		return nil
+	}
+	return &peer
 }
