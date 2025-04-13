@@ -82,7 +82,7 @@ func (socket *TCPSocket) HandleDeconnection() {
 	peer, exist := peerManager.GetPeer(socket.PeerID)
 	if exist {
 		peer.TCPSocket = nil
-		peerManager.UpdatePeer(peer)
+		peerManager.UpsertPeer(peer)
 		log.Println("Peer disconnected: ", socket.PeerID)
 	}
 }

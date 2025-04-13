@@ -20,3 +20,7 @@ func NewPeer(id string, addr net.IP) Peer {
 		LastSeen: time.Now(),
 	}
 }
+
+func (peer *Peer) Signal() {
+	peer.LastSeen = time.Now()
+}

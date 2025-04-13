@@ -7,7 +7,6 @@ import (
 	"peer-to-peer/app/peer"
 	"peer-to-peer/app/shared"
 	"strings"
-	"time"
 )
 
 func Listen(socketID int, pm *peer.PeerManager) {
@@ -49,7 +48,7 @@ func Listen(socketID int, pm *peer.PeerManager) {
 						remoteAddr.IP,
 					)
 				}else{
-					peerInstance.LastSeen = time.Now()
+					peerInstance.Signal()
 				}
 				pm.UpsertPeer(peerInstance)
 			}
