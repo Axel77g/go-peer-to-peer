@@ -56,14 +56,12 @@ func (socket *TCPSocket) ListenMessage(conn net.Conn, mu *sync.Mutex) {
 					if !exist {
 						log.Println("Receive HELLO from a peer that is not in the peer manager :", hello.PeerID)
 						peerInstance = peer.NewPeer(hello.PeerID, conn.RemoteAddr().(*net.TCPAddr).IP)
-						peerInstance.TCPSocket = socket
-						peerManager.SignalPeer(peerInstance) //signal only if the peer is new add it to the peer manager
 					}else{
 						log.Println("Receive HELLO from a peer that is already in the peer manager :", hello.PeerID)
-						peerInstance.TCPSocket = socket
 					}
+					peerInstance.TCPSocket = socket
 					socket.setPeerID(peerInstance.ID)
-					peerManager.UpdatePeer(peerInstance)
+					peerManager.UpsertPeer(peerInstance)
 				case MESSAGE_TYPE_FILE_DIR:
 					dir, _ := ParseJSONMessage[FileDirMessage](jsonMessage)
 					log.Println("Received directory: ", dir.Files)

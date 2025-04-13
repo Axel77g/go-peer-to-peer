@@ -51,7 +51,7 @@ func Listen(socketID int, pm *peer.PeerManager) {
 				}else{
 					peerInstance.LastSeen = time.Now()
 				}
-				pm.SignalPeer(peerInstance)
+				pm.UpsertPeer(peerInstance)
 			}
 		}
 

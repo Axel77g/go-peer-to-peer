@@ -29,26 +29,12 @@ func NewPeerManager() *PeerManager {
 	}
 }
 
-func (pm *PeerManager) SignalPeer(peer Peer) {
+func (pm *PeerManager) UpsertPeer(peer Peer) {
 	pm.mu.Lock()
 	_, exists := pm.peers[peer.ID]
-	if(exists){
-
-	}
 	pm.peers[peer.ID] = peer
 	pm.mu.Unlock()
 	if !exists { pm.Updates <- peer }
-}
-
-func (pm *PeerManager) UpdatePeer(peer Peer) {
-	pm.mu.Lock()
-	defer pm.mu.Unlock()
-	_, exists := pm.peers[peer.ID]
-	if exists {
-		pm.peers[peer.ID] = peer
-	} else {
-		log.Println("Trying to update a peer that does not exist")
-	}
 }
 
 func (pm *PeerManager) RemoveInactivePeers(timeout time.Duration) {

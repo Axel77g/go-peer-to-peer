@@ -46,7 +46,7 @@ func main() {
 				continue
 			}
 			peer.TCPSocket = &socket
-			peerManager.UpdatePeer(peer)
+			peerManager.UpsertPeer(peer)
 		}
 	}()
 
