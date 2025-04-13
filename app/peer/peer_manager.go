@@ -53,7 +53,7 @@ func (pm *PeerManager) PrintPeer() {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
 	for _, peer := range pm.peers {
-		log.Printf("Peer : %s, Addr : %s -> Socket  %v \n ", peer.ID, peer.Addr.String(), peer.TCPSocket)
+		log.Printf("[PMANAGE] Peer : %s, Addr : %s -> Socket  %v \n ", peer.ID, peer.Addr.String(), peer.TCPSocket)
 	}
 }
 

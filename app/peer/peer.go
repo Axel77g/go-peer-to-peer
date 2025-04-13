@@ -2,14 +2,13 @@ package peer
 
 import (
 	"net"
-	"peer-to-peer/app/shared"
 	"time"
 )
 
 type Peer struct {
 	ID       string
 	Addr     net.IP
-	TCPSocket shared.Socket
+	TCPSocket PeerMessager
 	LastSeen time.Time
 }
 

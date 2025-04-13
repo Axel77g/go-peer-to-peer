@@ -54,11 +54,19 @@ func (t *TCPServer) handleConnection(conn net.Conn) {
 	t.sockets[remoteAddr] = socket	
 	t.mu.Unlock()
 
-	socket.ListenMessage(conn, &t.mu)
+	socket.ListenMessage(conn, t)
 	t.removeSocket(socket)
 }
 
 func (t *TCPServer) removeSocket(socket TCPSocket) {
 	log.Println("[TCPServer] Remove socket of peer: ", socket.PeerID)
 	delete(t.sockets, socket.RemoteAddr)
+}
+
+func (t *TCPServer) PrintSocket(){
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	for _, socket := range t.sockets {
+		log.Printf("[TCP] Socket : %s, Addr : %s -> PeerID  %s \n ", socket.RemoteAddr, socket.Conn.RemoteAddr().String(), socket.PeerID)
+	}
 }

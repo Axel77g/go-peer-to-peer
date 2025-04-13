@@ -7,7 +7,6 @@ import (
 	"peer-to-peer/app/peer"
 	"peer-to-peer/app/shared"
 	"strconv"
-	"sync"
 )
 
 // interface TCPsocket
@@ -17,7 +16,7 @@ type TCPSocket struct {
 	PeerID string // can be nil in the beginning (handshake not started and not finished), it must be a reference of peerManager peer
 }
 
-func (socket *TCPSocket) ListenMessage(conn net.Conn, mu *sync.Mutex) {
+func (socket *TCPSocket) ListenMessage(conn net.Conn, server *TCPServer) {
 	defer socket.HandleDeconnection()
 	// Handle the message
 	for {
@@ -40,7 +39,6 @@ func (socket *TCPSocket) ListenMessage(conn net.Conn, mu *sync.Mutex) {
 				break
 			}
 
-			mu.Lock()
 			if !socket.HandshakeEnd() && jsonMessage.Type != MESSAGE_TYPE_HELLO {
 				log.Println("Handshake not finished, ignoring message")
 				continue
@@ -61,6 +59,11 @@ func (socket *TCPSocket) ListenMessage(conn net.Conn, mu *sync.Mutex) {
 					}
 					peerInstance.TCPSocket = socket
 					socket.setPeerID(peerInstance.ID)
+					if server != nil {
+						server.mu.Lock()
+						server.sockets[socket.RemoteAddr] = *socket
+						server.mu.Unlock()
+					}
 					peerManager.UpsertPeer(peerInstance)
 				case MESSAGE_TYPE_FILE_DIR:
 					dir, _ := ParseJSONMessage[FileDirMessage](jsonMessage)
@@ -68,7 +71,6 @@ func (socket *TCPSocket) ListenMessage(conn net.Conn, mu *sync.Mutex) {
 					//compare the directory with the one in the peer
 			}
 
-			mu.Unlock()
 		}
     }
 }
@@ -133,6 +135,10 @@ func CreateTCPConnection(peer *peer.Peer) (TCPSocket,error) {
 	if _, err := socket.Send(message); err != nil {
 		return socket, err
 	}
-	go socket.ListenMessage(conn, &sync.Mutex{})
+	go socket.ListenMessage(conn, nil)
 	return socket, nil
+}
+
+func (socket *TCPSocket) SendDirectory() error {
+	return nil
 }
