@@ -1,17 +1,19 @@
-package filesystemwatcher
+package file_watcher
 
 import (
 	"log"
+	file_event "peer-to-peer/app/files/event"
+	file_scanner "peer-to-peer/app/files/scanner"
 	"time"
 )
 
 type Watcher struct {
 	DirectoryPath string
 	Cooldown      time.Duration
-	Events        chan FileSystemEvent
+	Events        chan file_event.FileEvent
 }
 
-func NewWatcher(dirPath string, cooldown time.Duration, event chan FileSystemEvent) Watcher {
+func NewWatcher(dirPath string, cooldown time.Duration, event chan file_event.FileEvent) Watcher {
 	return Watcher{
 		dirPath,
 		cooldown,
@@ -19,17 +21,15 @@ func NewWatcher(dirPath string, cooldown time.Duration, event chan FileSystemEve
 	}
 }
 
-
-
 // @blocking thread
 func (watcher *Watcher) Listen() {
 	log.Printf("Listening for file system events in %s\n", watcher.DirectoryPath)
-	baseDirStat := GetFileDirStat(watcher.DirectoryPath)
+	baseDirStat := file_scanner.Scan(watcher.DirectoryPath)
 	ticker := time.NewTicker(watcher.Cooldown)
 	defer ticker.Stop()
 	for range ticker.C {
-		newFileDirStat := GetFileDirStat(watcher.DirectoryPath)
-		events := baseDirStat.Compare(&newFileDirStat)
+		newFileDirStat := file_scanner.Scan(watcher.DirectoryPath)
+		events := CompareDirectories(baseDirStat, newFileDirStat)
 		baseDirStat = newFileDirStat
 		if len(events) == 0 {
 			continue

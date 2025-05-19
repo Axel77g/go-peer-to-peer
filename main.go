@@ -3,8 +3,9 @@ package main
 import (
 	"log"
 	"peer-to-peer/app/discovery"
-	filesystemwatcher "peer-to-peer/app/file_system_watcher"
 	filetransfering "peer-to-peer/app/file_transfering"
+	file_event "peer-to-peer/app/files/event"
+	file_watcher "peer-to-peer/app/files/watcher"
 	"peer-to-peer/app/peer"
 	"peer-to-peer/app/shared"
 	tcpcomunication "peer-to-peer/app/tcp_comunication"
@@ -24,8 +25,8 @@ func main() {
 	peerManager := peer.GetPeerManager()
 	transferingQueue := filetransfering.NewTransferQueue()
 	networkInterfaceManager := discovery.NewNetworkInterfaceManager()
-	fileEvents := make(chan filesystemwatcher.FileSystemEvent)
-	fileWatcher := filesystemwatcher.NewWatcher(shared.SHARED_DIRECTORY, 2*time.Second, fileEvents)
+	fileEvents := make(chan file_event.FileEvent)
+	fileWatcher := file_watcher.NewWatcher(shared.SHARED_DIRECTORY, 2*time.Second, fileEvents)
 	
 	go func() {
 		for event := range fileEvents {
