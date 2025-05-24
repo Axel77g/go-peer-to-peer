@@ -2,7 +2,6 @@ package peer_comunication
 
 import (
 	"encoding/binary"
-	"log"
 	"net"
 )
 
@@ -14,7 +13,6 @@ type UDPTransportChannel struct {
 }
 
 func NewUDPTransportChannel(address TransportAddress) *UDPTransportChannel {
-	log.Printf("New UDP transport channel created for address: %s\n", address.String())
 	listener := GetUDPServerListener() //get the udp listener singleton
 	return &UDPTransportChannel{
 		listener: listener,

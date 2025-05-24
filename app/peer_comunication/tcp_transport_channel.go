@@ -2,7 +2,6 @@ package peer_comunication
 
 import (
 	"encoding/binary"
-	"log"
 	"net"
 )
 
@@ -13,7 +12,6 @@ type TCPTransportChannel struct {
 }
 
 func NewTCPTransportChannel(conn net.Conn) *TCPTransportChannel {
-	log.Printf("New TCCP transport channel created for address: %s\n", conn.RemoteAddr().String())
 	return &TCPTransportChannel{
 		conn:     conn,
 		incoming: make(chan TransportMessage, 100),
