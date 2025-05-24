@@ -19,16 +19,7 @@ func handleNewRemoteUDPTransportChannel(udpServer *peer_comunication.UDPServerLi
 	for {
 		select {
 			case channel := <- udpServer.NewTransportChannelEvent:
-				peer_comunication.RegisterTransportChannel(channel) //register the new udp transport channel
-				//try connect to the peer using the tcp protocol
-				addr := channel.GetAddress()
-				conn, err := net.Dial("tcp", net.JoinHostPort(addr.GetIP().String(), strconv.Itoa(shared.TCPPort)))
-				if( err != nil) {
-					log.Println("Error connecting to peer via TCP:", err)
-					return
-				}
-				transportChannel := peer_comunication.NewTCPTransportChannel(conn)
-				peer_comunication.RegisterTransportChannel(transportChannel) //register the new local tcp transport channel
+				peer_comunication.RegisterTransportChannel(channel) //register the new udp transport channel -> this will create a peer if it does not exist and trigger handleNewPeerAddedEvent
 		}
 	}
 }
@@ -46,6 +37,25 @@ func hanldeNewRemoteTCPTransportChannel(tcpServer *peer_comunication.TCPServer) 
 	}
 }
 
+func handleNewPeerAddedEvent(){
+	for {
+		select {
+		case peer := <- peer_comunication.NewPeerAddedUpdate:
+			channelCollection := peer.GetTransportsChannels()
+			_, exist := channelCollection.GetByType("tcp")
+			if !exist { //if the tcp not exist, we will try to connect to the peer using the tcp protocol
+				conn, err := net.Dial("tcp", net.JoinHostPort(peer.GetIP().String(), strconv.Itoa(shared.TCPPort)))
+				if( err != nil) {
+					log.Println("Error connecting to peer via TCP:", err)
+					return
+				}
+				transportChannel := peer_comunication.NewTCPTransportChannel(conn)
+				peer_comunication.RegisterTransportChannel(transportChannel)
+			}
+		}
+	}
+}
+
 
 func main() {
 	wg := sync.WaitGroup{}
@@ -53,10 +63,12 @@ func main() {
 
 	udpServer := peer_comunication.GetUDPServerListener()
 	go udpServer.Listen() //open udp server listener
-	go handleNewRemoteUDPTransportChannel(udpServer) // Handle new udp transport channel
 
 	tcpServer := peer_comunication.NewTCPServer(shared.TCPPort)
 	go tcpServer.Listen() //open tcp server listener
+
+	go handleNewRemoteUDPTransportChannel(udpServer) // Handle new udp transport channel
+	go handleNewPeerAddedEvent()
 	go hanldeNewRemoteTCPTransportChannel(tcpServer) // Handle new tcp transport channel
 
 	networkInterfaceManager := discovery.NewNetworkInterfaceManager()

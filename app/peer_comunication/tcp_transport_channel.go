@@ -56,10 +56,10 @@ func (t *TCPTransportChannel) CollectMessage(message TransportMessage) error {
 
 func (t *TCPTransportChannel) Read() (TransportMessage, error) {
 	select {
-	case message := <-t.incoming:
-		return message, nil
-	case <-t.stop:
-		return TransportMessage{}, nil
+		case message := <-t.incoming:
+			return message, nil
+		case <-t.stop:
+			return TransportMessage{}, nil
 	}
 }
 

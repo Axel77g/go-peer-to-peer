@@ -10,6 +10,7 @@ type UDPTransportChannel struct {
 	listener *UDPServerListener
 	address TransportAddress
 	incoming chan TransportMessage
+	stop    chan struct{}
 	lastMessageTime time.Time
 }
 
@@ -19,6 +20,8 @@ func NewUDPTransportChannel(address TransportAddress) *UDPTransportChannel {
 		listener: listener,
 		address:  address,
 		incoming: make(chan TransportMessage, 100), // Buffered channel for incoming messages
+		stop:     make(chan struct{}),
+		lastMessageTime: time.Now(),
 	}
 }
 
@@ -56,11 +59,12 @@ func (u *UDPTransportChannel) Close() error {
 }
 
 func (u *UDPTransportChannel) Read() (TransportMessage, error) {
+	// Block until a message is available or the channel is closed
 	select {
-	case message := <-u.incoming:
-		return message, nil
-	default:
-		return TransportMessage{}, nil // No message available
+		case message := <-u.incoming:
+			return message, nil
+		case <-u.stop:
+			return TransportMessage{}, nil // Channel closed, no message available
 	}
 }
 

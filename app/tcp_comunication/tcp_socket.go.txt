@@ -4,7 +4,6 @@ import (
 	"io"
 	"log"
 	"net" // Renamed to avoid confusion, but no structural change here.
-	"peer-to-peer/app/peer"
 	"peer-to-peer/app/shared"
 	"strconv"
 )
@@ -141,4 +140,4 @@ func CreateTCPConnection(peer *peer.Peer) (TCPSocket,error) {
 
 func (socket *TCPSocket) SendDirectory() error {
 	return nil
-}
+} 
