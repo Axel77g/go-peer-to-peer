@@ -38,9 +38,32 @@ func RegisterTransportChannel(channel ITransportChannel) IPeer {
 	return newPeer
 }
 
+func UnregisterTransportChannel(channel ITransportChannel) {
+	address := channel.GetAddress()
+	ip := address.GetIP().String()
+	log.Printf("Removing transport channel for address: %s\n", address.String())
+
+	peersMutex.Lock()
+	defer peersMutex.Unlock()
+
+	if peer, exists := peers[ip]; exists {
+		peer.removeTransportChannel(channel)
+		if len(peer.getTransportsChannels()) == 0 {
+			delete(peers, ip)
+			log.Printf("Peer %s removed due to no active transport channels\n", ip)
+		}
+	} else {
+		log.Printf("No peer found for address: %s\n", address.String())
+	}
+}
+
 func AddPeer(peer IPeer) {
 	ip := peer.getAddress().String()
 	if _, exists := peers[ip]; !exists {
 		peers[ip] = peer
+	}
+	//for each peer log 
+	for _, peer := range peers {
+		log.Printf("[PMANAGE] Peer : %s", peer.String())
 	}
 }

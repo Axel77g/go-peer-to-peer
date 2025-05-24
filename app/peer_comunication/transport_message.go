@@ -1,9 +1,13 @@
 package peer_comunication
 
+import "time"
+
+
 type TransportMessage struct {
 	size    uint32
 	content []byte
 	from TransportAddress
+	time int64
 }
 
 func NewTransportMessage(size uint32, content []byte, from TransportAddress) TransportMessage {
@@ -11,6 +15,7 @@ func NewTransportMessage(size uint32, content []byte, from TransportAddress) Tra
 		size:    size,
 		content: content,
 		from:   from,
+		time:   time.Now().UnixMilli(),
 	}
 }
 
@@ -24,4 +29,8 @@ func (t *TransportMessage) getContent() []byte {
 
 func (t *TransportMessage) getFrom() TransportAddress {
 	return t.from
+}
+
+func (t *TransportMessage) getTime() int64 {
+	return t.time
 }

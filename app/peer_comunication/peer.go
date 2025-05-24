@@ -2,14 +2,16 @@ package peer_comunication
 
 import (
 	"net"
+	"strconv"
 	"sync"
 )
 
 type IPeer interface {
 	getAddress() net.IP
-	getTransportsChannel() []ITransportChannel
+	getTransportsChannels() []ITransportChannel
 	addTransportChannel(channel ITransportChannel)
 	removeTransportChannel(channel ITransportChannel)
+	String() string
 }
 
 type Peer struct {
@@ -28,16 +30,19 @@ func NewPeer(address net.IP) *Peer {
 func (p *Peer) getAddress() net.IP {
 	return p.address
 }
-func (p *Peer) getTransportsChannel() []ITransportChannel {
+
+func (p *Peer) getTransportsChannels() []ITransportChannel {
 	p.mutex.RLock()
 	defer p.mutex.RUnlock()
 	return p.transportsChannel
 }
+
 func (p *Peer) addTransportChannel(channel ITransportChannel) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 	p.transportsChannel = append(p.transportsChannel, channel)
 }
+
 func (p *Peer) removeTransportChannel(channel ITransportChannel) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
@@ -49,4 +54,8 @@ func (p *Peer) removeTransportChannel(channel ITransportChannel) {
 			break
 		}
 	}
+}
+
+func (p *Peer) String() string {
+	return p.address.String() + " - " + strconv.Itoa(len(p.transportsChannel)) + " channels"
 }

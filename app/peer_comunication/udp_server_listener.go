@@ -15,6 +15,7 @@ import (
 type UDPServerListener struct {
 	addr net.UDPAddr
 	channels map[TransportAddressKey]ITransportChannel
+	NewTransportChannelEvent chan ITransportChannel 
 }
 
 var instance *UDPServerListener
@@ -29,6 +30,7 @@ func GetUDPServerListener() *UDPServerListener {
         instance = &UDPServerListener{
 			addr,
 			make(map[TransportAddressKey]ITransportChannel),
+			make(chan ITransportChannel, 10),
 		}
     })
     return instance
@@ -60,7 +62,11 @@ func (u *UDPServerListener) Listen() error {
 
 		if _, exists := u.channels[key]; !exists {
 			channel := NewUDPTransportChannel(address)
-			RegisterTransportChannel(channel) 
+			select {
+				case u.NewTransportChannelEvent <- channel:
+				default:
+					log.Println("New UDP transport channel event channel is full, dropping the event, it can cause not expect behavior")
+			}
 			u.channels[key] = channel
 		}
 

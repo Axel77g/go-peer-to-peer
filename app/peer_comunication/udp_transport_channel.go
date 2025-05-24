@@ -3,6 +3,7 @@ package peer_comunication
 import (
 	"errors"
 	"net"
+	"time"
 )
 
 
@@ -10,6 +11,7 @@ type UDPTransportChannel struct {
 	listener *UDPServerListener
 	address TransportAddress
 	incoming chan TransportMessage
+	lastMessageTime time.Time
 }
 
 func NewUDPTransportChannel(address TransportAddress) *UDPTransportChannel {
@@ -69,5 +71,15 @@ func (u *UDPTransportChannel) CollectMessage(message TransportMessage) error {
 		default:
 			return errors.New("channel full") // If the channel is full, return an error
 	}
+	u.lastMessageTime = time.Now()
 	return nil
+}
+
+
+func (u *UDPTransportChannel) GetProtocol() string {
+	return "udp"
+}
+
+func (u *UDPTransportChannel) IsAlive() bool {
+	return time.Since(u.lastMessageTime) < 20*time.Second // Consider alive if last message was received within 30 seconds
 }

@@ -1,7 +1,6 @@
 package peer_comunication
 
 import (
-	"encoding/binary"
 	"log"
 	"net"
 	"strconv"
@@ -11,6 +10,7 @@ type TCPServer struct {
 	Listener net.Listener
 	channels map[TransportAddressKey]ITransportChannel
 	port   int
+	NewTransportChannelEvent chan ITransportChannel
 }
 
 func NewTCPServer(port int) *TCPServer {
@@ -24,6 +24,7 @@ func NewTCPServer(port int) *TCPServer {
 		Listener: listener,
 		channels: make(map[TransportAddressKey]ITransportChannel),
 		port:     port,
+		NewTransportChannelEvent: make(chan ITransportChannel, 10),	
 	}
 }
 
@@ -58,9 +59,11 @@ func (s *TCPServer) Accept() (ITransportChannel, error) {
 	}
 	s.channels[address.GetKey()] = channel
 
-	RegisterTransportChannel(channel)
-
-	go readMessageFromConn(channel, conn)
+	select {
+		case s.NewTransportChannelEvent <- channel:
+		default:
+			log.Println("New TCP transport channel event channel is full, dropping the event, it can cause not expect behavior")
+	}
 
 	return channel, nil
 }
@@ -83,35 +86,3 @@ func (s *TCPServer) Close() error {
 	s.channels = make(map[TransportAddressKey]ITransportChannel)
 	return nil
 }
-
-func readMessageFromConn(channel ITransportChannel, conn net.Conn) error {
-	for{
-		// Read the size of the message
-		sizeBytes := make([]byte, 4)
-		_, err := conn.Read(sizeBytes)
-		if err != nil {
-			return err
-		}
-		size := binary.BigEndian.Uint32(sizeBytes)
-
-		// Read the message
-		messageBytes := make([]byte, size)
-		_, err = conn.Read(messageBytes)
-		if err != nil {
-			return err
-		}
-
-		address := TransportAddress{
-			ip:   conn.RemoteAddr().(*net.TCPAddr).IP,
-			port: conn.RemoteAddr().(*net.TCPAddr).Port,
-		}
-
-		transportMessage := NewTransportMessage(size, messageBytes, address)
-		err = channel.CollectMessage(transportMessage)
-		if err != nil {
-			log.Printf("Error collecting message from channel: %v\n", err)
-			return err
-		}
-	}
-}
-

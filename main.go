@@ -1,9 +1,12 @@
 package main
 
 import (
+	"log"
+	"net"
 	"peer-to-peer/app/discovery"
 	"peer-to-peer/app/peer_comunication"
 	"peer-to-peer/app/shared"
+	"strconv"
 	"sync"
 )
 
@@ -62,8 +65,30 @@ func main() {
 
 	udpServer := peer_comunication.GetUDPServerListener()
 	go udpServer.Listen() //open udp server listener
+	go func(){ // Handle new udp transport channel
+		select {
+			case channel := <- udpServer.NewTransportChannelEvent:
+				peer_comunication.RegisterTransportChannel(channel) //register the new udp transport channel
+				//try connect to the peer using the tcp protocol
+				addr := channel.GetAddress()
+				conn, err := net.Dial("tcp", net.JoinHostPort(addr.GetIP().String(), strconv.Itoa(shared.TCPPort)))
+				if( err != nil) {
+					log.Println("Error connecting to peer via TCP:", err)
+					return
+				}
+				transportChannel := peer_comunication.NewTCPTransportChannel(conn)
+				peer_comunication.RegisterTransportChannel(transportChannel) //register the new local tcp transport channel
+		}
+	}()
+
 	tcpServer := peer_comunication.NewTCPServer(shared.TCPPort)
 	go tcpServer.Listen() //open tcp server listener
+	go func() { // Handle new tcp transport channel
+		select {
+			case channel := <- tcpServer.NewTransportChannelEvent:
+				peer_comunication.RegisterTransportChannel(channel) //register the new remote tcp transport channel
+		}
+	}()
 
 	networkInterfaceManager := discovery.NewNetworkInterfaceManager()
 	go discovery.SenderLoop(shared.SOCKET_ID, networkInterfaceManager)
