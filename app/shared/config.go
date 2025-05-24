@@ -3,8 +3,8 @@ package shared
 import "math/rand"
 
 var (
-	TCPPort = 9998
-	UDPPort = 9999
-	SHARED_DIRECTORY = "./Shared"
-	SOCKET_ID = rand.Intn(10000000)
+	TCPPort int = 9998
+	UDPPort int = 9999
+	SHARED_DIRECTORY string = "./Shared"
+	SOCKET_ID int = rand.Intn(10000000)
 )

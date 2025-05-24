@@ -1,24 +1,17 @@
 package main
 
 import (
-	"log"
 	"peer-to-peer/app/discovery"
-	filetransfering "peer-to-peer/app/file_transfering"
-	file_event "peer-to-peer/app/files/event"
-	file_watcher "peer-to-peer/app/files/watcher"
-	"peer-to-peer/app/peer"
+	"peer-to-peer/app/peer_comunication"
 	"peer-to-peer/app/shared"
-	tcpcomunication "peer-to-peer/app/tcp_comunication"
 	"sync"
-	"time"
 )
 
-
-func main() {
+/* func main() {
 	wg := sync.WaitGroup{}
 	wg.Add(6)
 
-	
+
 	log.Println("Socket ID:", shared.SOCKET_ID)
 
 	tcpServer := tcpcomunication.NewTCPServer()
@@ -27,7 +20,7 @@ func main() {
 	networkInterfaceManager := discovery.NewNetworkInterfaceManager()
 	fileEvents := make(chan file_event.FileEvent)
 	fileWatcher := file_watcher.NewWatcher(shared.SHARED_DIRECTORY, 2*time.Second, fileEvents)
-	
+
 	go func() {
 		for event := range fileEvents {
 			log.Println("Event reçu:", event.EventType, "sur le fichier:", event.FilePath)
@@ -54,10 +47,26 @@ func main() {
 	go tcpServer.Listen()
 	go fileWatcher.Listen()
 	go discovery.Listen(shared.SOCKET_ID, peerManager)
-	
+
 	go discovery.SenderLoop(shared.SOCKET_ID, networkInterfaceManager, peerManager)
 	go transferingQueue.Loop()
 
 	wg.Wait()
 }
+*/
 
+
+func main() {
+	wg := sync.WaitGroup{}
+	wg.Add(6)
+
+	udpServer := peer_comunication.GetUDPServerListener()
+	go udpServer.Listen() //open udp server listener
+	tcpServer := peer_comunication.NewTCPServer(shared.TCPPort)
+	go tcpServer.Listen() //open tcp server listener
+
+	networkInterfaceManager := discovery.NewNetworkInterfaceManager()
+	go discovery.SenderLoop(shared.SOCKET_ID, networkInterfaceManager)
+
+    wg.Wait()
+}

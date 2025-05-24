@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"peer-to-peer/app/peer"
+	"peer-to-peer/app/peer_comunication"
+	"peer-to-peer/app/shared"
 	"time"
 )
 
@@ -12,27 +13,17 @@ import (
 Emit on the broadcast network address
 */
 func discoveryRequestSender(socketID int, ip net.IP) {
-	conn, err := net.DialUDP("udp", nil, &net.UDPAddr{
-		IP:   ip,
-		Port: 9999,
-	})
-
-	if err != nil {
-		log.Printf("Erreur de connexion UDP broadcast : %v\n", err)
+	address := peer_comunication.NewTransportAddress(ip, shared.UDPPort)
+	transportChannel := peer_comunication.NewUDPTransportChannel(address)
+	if transportChannel == nil {
+		log.Println("Failed to create UDP transport channel")
 		return
 	}
-	defer conn.Close()
-
-	// Autoriser le broadcast (pas obligatoire dans Go, mais bonne pratique)
-	if err := conn.SetWriteDeadline(time.Now().Add(2 * time.Second)); err != nil {
-		log.Println("Erreur deadline UDP :", err)
-		return
-	}
-
+		
 	message := []byte("DISCOVER_PEER_REQUEST:" + fmt.Sprintf("%d", socketID))
-	_, err = conn.Write(message)
+	err := transportChannel.Send(message)
 	if err != nil {
-		log.Printf("Erreur lors de l'envoi UDP : %v\n", err)
+		log.Printf("Failed to send discovery request to %s: %v\n", address.String(), err)
 		return
 	}
 }
@@ -44,7 +35,7 @@ func sender(networkInterfaceManager *NetworkInterfaceManager, socketID int) {
 	}
 }
 
-func SenderLoop(socketID int, networkInterfaceManager *NetworkInterfaceManager, peerManager *peer.PeerManager) {
+func SenderLoop(socketID int, networkInterfaceManager *NetworkInterfaceManager) {
 	networkInterfaceManager.fetchInterfaces()
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
@@ -52,6 +43,5 @@ func SenderLoop(socketID int, networkInterfaceManager *NetworkInterfaceManager, 
 	sender(networkInterfaceManager, socketID)
 	for range ticker.C {
 		sender(networkInterfaceManager, socketID)
-		peerManager.RemoveInactivePeers(10 * time.Second)
 	}
 }

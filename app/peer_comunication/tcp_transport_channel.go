@@ -2,23 +2,23 @@ package peer_comunication
 
 import (
 	"encoding/binary"
+	"log"
 	"net"
 )
 
 type TCPTransportChannel struct {
 	conn     net.Conn
-	incoming chan ITransportMessage
+	incoming chan TransportMessage
 	stop     chan struct{}
 }
 
-func NewTcpTransportChannel(conn net.Conn) *TCPTransportChannel {
-	t := &TCPTransportChannel{
+func NewTCPTransportChannel(conn net.Conn) *TCPTransportChannel {
+	log.Printf("New TCCP transport channel created for address: %s\n", conn.RemoteAddr().String())
+	return &TCPTransportChannel{
 		conn:     conn,
-		incoming: make(chan ITransportMessage, 100),
+		incoming: make(chan TransportMessage, 100),
 		stop:     make(chan struct{}),
 	}
-	go t.readLoop()
-	return t
 }
 
 func (t *TCPTransportChannel) Send(content []byte) error {
@@ -40,46 +40,17 @@ func (t *TCPTransportChannel) Send(content []byte) error {
 	return nil
 }
 
-func (t *TCPTransportChannel) readMessage() (ITransportMessage, error) {
-	// Read the size of the message
-	sizeBytes := make([]byte, 4)
-	_, err := t.conn.Read(sizeBytes)
-	if err != nil {
-		return nil, err
-	}
-	size := binary.BigEndian.Uint32(sizeBytes)
-
-	// Read the message
-	messageBytes := make([]byte, size)
-	_, err = t.conn.Read(messageBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewTCPMessage(size, messageBytes, false), nil
+func (t *TCPTransportChannel) CollectMessage(message TransportMessage) error {
+	t.incoming <- message
+	return nil
 }
 
-func (t *TCPTransportChannel) readLoop() {
-	for {
-		select {
-		case <-t.stop:
-			return
-		default:
-			message, err := t.readMessage()
-			if err != nil {
-				continue
-			}
-			t.incoming <- message
-		}
-	}
-}
-
-func (t *TCPTransportChannel) Read() (ITransportMessage, error) {
+func (t *TCPTransportChannel) Read() (TransportMessage, error) {
 	select {
 	case message := <-t.incoming:
 		return message, nil
 	case <-t.stop:
-		return nil, nil
+		return TransportMessage{}, nil
 	}
 }
 
@@ -93,4 +64,14 @@ func (t *TCPTransportChannel) GetPort() int {
 		return tcpAddr.Port
 	}
 	return 0
+}
+
+func (t *TCPTransportChannel) GetAddress() TransportAddress {
+	if tcpAddr, ok := t.conn.RemoteAddr().(*net.TCPAddr); ok {
+		return TransportAddress{
+			ip:   tcpAddr.IP,
+			port: tcpAddr.Port,
+		}
+	}
+	return TransportAddress{}
 }

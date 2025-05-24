@@ -1,92 +1,79 @@
 package peer_comunication
 
 import (
-	"errors"
+	"encoding/binary"
 	"log"
 	"net"
 )
 
+
 type UDPTransportChannel struct {
-	incoming chan ITransportMessage
-	addr     net.Addr
-	port     int
-	stop     chan struct{}
+	listener *UDPServerListener
+	address TransportAddress
+	incoming chan TransportMessage
 }
 
-func NewUDPTransportChannel(port int) *UDPTransportChannel {
-	channel := &UDPTransportChannel{
-		port:     port,
-		incoming: make(chan ITransportMessage, 100),
-		stop:     make(chan struct{}),
+func NewUDPTransportChannel(address TransportAddress) *UDPTransportChannel {
+	log.Printf("New UDP transport channel created for address: %s\n", address.String())
+	listener := GetUDPServerListener() //get the udp listener singleton
+	return &UDPTransportChannel{
+		listener: listener,
+		address:  address,
 	}
-	go channel.readLoop()
-	return channel
-}
-
-func (u *UDPTransportChannel) readMessage(conn net.UDPConn) {
-	messageSize := make([]byte, 4)
-	size, remoteAddr := conn.ReadFromUDP(messageSize)
-
-}
-
-func (u *UDPTransportChannel) readLoop() {
-	// open udp server on port
-	// listen for incoming messages
-
-	addr := net.UDPAddr{
-		Port: u.port,
-		IP:   net.IPv4zero,
-	}
-
-	conn, err := net.ListenUDP("udp", &addr)
-	if err != nil {
-		log.Printf("Erreur lors de l'écoute UDP : %v\n", err)
-		return
-	}
-
-	defer conn.Close()
-	log.Println("UDP server listening on port", u.port)
-
-	for {
-		select {
-		case <-u.stop:
-			return
-		default:
-			message, err := u.readMessage()
-			if err != nil {
-				continue
-			}
-			u.incoming <- message
-		}
-	}
-	/* messageSize := make([]byte, 4)
-	for {
-		n, remoteAddr, err := conn.ReadFromUDP(buffer)
-		if err != nil {
-			log.Printf("Erreur de lecture UDP : %v\n", err)
-			continue
-		}
-
-		// process incomming message
-		// the transport channels are use for remote peer communication and also for the local peer to write on network
-
-	} */
-
 }
 
 func (u *UDPTransportChannel) GetPort() int {
-	return u.port
+	return u.address.port
+}
+
+func (u *UDPTransportChannel) GetAddress() TransportAddress {
+	return u.address
 }
 
 func (u *UDPTransportChannel) Send(content []byte) error {
-	// Implement UDP send logic here
+	conn, err := net.DialUDP("udp", nil, &net.UDPAddr{
+		IP:   u.address.ip,
+		Port: u.GetPort(),
+	})
+
+	if err != nil {
+		return err
+	}
+
+	defer conn.Close()
+
+	size := uint32(len(content))
+	sizeBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(sizeBytes, size)
+	_, err = conn.Write(sizeBytes)
+	if err != nil {
+		return err
+	}
+
+	_, err = conn.Write(content)
+	if err != nil {
+		return err
+	}
 	return nil
 }
-func (u *UDPTransportChannel) Read() (ITransportMessage, error) {
-	// Implement UDP read logic here
-	return nil, nil
-}
+
 
 func (u *UDPTransportChannel) Close() error {
-	return errors.New("Cannot close UDP transport channel")
+	// UDP does not have a close method like TCP, but we can return nil
+	return nil
 }
+
+func (u *UDPTransportChannel) Read() (TransportMessage, error) {
+	select {
+	case message := <-u.incoming:
+		return message, nil
+	default:
+		return TransportMessage{}, nil // No message available
+	}
+}
+
+func (u *UDPTransportChannel) CollectMessage(message TransportMessage) error {
+	u.incoming <- message
+	return nil
+}
+
