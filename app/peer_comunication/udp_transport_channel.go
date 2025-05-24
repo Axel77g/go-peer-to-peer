@@ -7,17 +7,26 @@ import (
 )
 
 type UDPTransportChannel struct {
-	incoming chan ITransportMessage;
-	port int
+	incoming chan ITransportMessage
+	addr     net.Addr
+	port     int
+	stop     chan struct{}
 }
 
 func NewUDPTransportChannel(port int) *UDPTransportChannel {
 	channel := &UDPTransportChannel{
-		port: port,
+		port:     port,
 		incoming: make(chan ITransportMessage, 100),
+		stop:     make(chan struct{}),
 	}
 	go channel.readLoop()
 	return channel
+}
+
+func (u *UDPTransportChannel) readMessage(conn net.UDPConn) {
+	messageSize := make([]byte, 4)
+	size, remoteAddr := conn.ReadFromUDP(messageSize)
+
 }
 
 func (u *UDPTransportChannel) readLoop() {
@@ -37,7 +46,20 @@ func (u *UDPTransportChannel) readLoop() {
 
 	defer conn.Close()
 	log.Println("UDP server listening on port", u.port)
-	buffer := make([]byte, 1024)
+
+	for {
+		select {
+		case <-u.stop:
+			return
+		default:
+			message, err := u.readMessage()
+			if err != nil {
+				continue
+			}
+			u.incoming <- message
+		}
+	}
+	/* messageSize := make([]byte, 4)
 	for {
 		n, remoteAddr, err := conn.ReadFromUDP(buffer)
 		if err != nil {
@@ -48,7 +70,7 @@ func (u *UDPTransportChannel) readLoop() {
 		// process incomming message
 		// the transport channels are use for remote peer communication and also for the local peer to write on network
 
-	}
+	} */
 
 }
 
@@ -64,7 +86,6 @@ func (u *UDPTransportChannel) Read() (ITransportMessage, error) {
 	// Implement UDP read logic here
 	return nil, nil
 }
-
 
 func (u *UDPTransportChannel) Close() error {
 	return errors.New("Cannot close UDP transport channel")
