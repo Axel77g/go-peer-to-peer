@@ -1,6 +1,7 @@
 package peer_comunication
 
 import (
+	"log"
 	"net"
 	"sync"
 	"time"
@@ -80,7 +81,8 @@ func (u *UDPTransportChannel) CollectMessage(message TransportMessage) error {
 	u.lastMessageTime = time.Now()
 	u.monitorOnce.Do(func() {
 		go func() {
-			time.Sleep(20 * time.Second)
+			time.Sleep(10 * time.Second)
+			log.Printf("Checking if UDP transport channel %s is alive\n", u.address.String())
 			if !u.IsAlive() {
 				UnregisterTransportChannel(u) // Unregister the channel if it is not alive
 			}
@@ -95,5 +97,5 @@ func (u *UDPTransportChannel) GetProtocol() string {
 }
 
 func (u *UDPTransportChannel) IsAlive() bool {
-	return time.Since(u.lastMessageTime) < 20*time.Second // Consider alive if last message was received within 30 seconds
+	return time.Since(u.lastMessageTime) < 8*time.Second // Consider alive if last message was received within 30 seconds
 }
