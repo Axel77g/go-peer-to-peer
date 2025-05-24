@@ -2,6 +2,8 @@ package peer_comunication
 
 import (
 	"net"
+	"peer-to-peer/app/peer_comunication"
+	"sync"
 	"time"
 )
 
@@ -12,6 +14,7 @@ type UDPTransportChannel struct {
 	incoming chan TransportMessage
 	stop    chan struct{}
 	lastMessageTime time.Time
+	monitorOnce      sync.Once
 }
 
 func NewUDPTransportChannel(address TransportAddress) *UDPTransportChannel {
@@ -76,6 +79,14 @@ func (u *UDPTransportChannel) CollectMessage(message TransportMessage) error {
 			u.incoming <- message // and add the new message
 	}
 	u.lastMessageTime = time.Now()
+	u.monitorOnce.Do(func() {
+		go func() {
+			time.Sleep(20 * time.Second)
+			if !u.IsAlive() {
+				peer_comunication.UnregisterTransportChannel(u) // Unregister the channel if it is not alive
+			}
+		}()
+	})
 	return nil
 }
 
