@@ -1,7 +1,7 @@
 package peer_comunication
 
 import (
-	"encoding/binary"
+	"errors"
 	"net"
 )
 
@@ -17,6 +17,7 @@ func NewUDPTransportChannel(address TransportAddress) *UDPTransportChannel {
 	return &UDPTransportChannel{
 		listener: listener,
 		address:  address,
+		incoming: make(chan TransportMessage, 100), // Buffered channel for incoming messages
 	}
 }
 
@@ -35,22 +36,14 @@ func (u *UDPTransportChannel) Send(content []byte) error {
 	})
 
 	if err != nil {
-		return err
+		panic("Failed to connect to UDP server: " + err.Error())
 	}
 
 	defer conn.Close()
 
-	size := uint32(len(content))
-	sizeBytes := make([]byte, 4)
-	binary.BigEndian.PutUint32(sizeBytes, size)
-	_, err = conn.Write(sizeBytes)
-	if err != nil {
-		return err
-	}
-
 	_, err = conn.Write(content)
 	if err != nil {
-		return err
+		panic("Failed to send content: " + err.Error())
 	}
 	return nil
 }
@@ -71,7 +64,10 @@ func (u *UDPTransportChannel) Read() (TransportMessage, error) {
 }
 
 func (u *UDPTransportChannel) CollectMessage(message TransportMessage) error {
-	u.incoming <- message
+	select {
+		case u.incoming <- message:
+		default:
+			return errors.New("channel full") // If the channel is full, return an error
+	}
 	return nil
 }
-

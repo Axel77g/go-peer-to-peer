@@ -43,15 +43,15 @@ func (u *UDPServerListener) Listen() error {
 	defer conn.Close()
 
 	log.Println("Serveur de découverte UDP en écoute sur le port", u.addr.Port)
-
-	buffer := make([]byte, 1024)
+	sizeBuffer := make([]byte, 4096) // Buffer to read the size of the message
 	for {
-		n, remoteAddr, err := conn.ReadFromUDP(buffer)
+		n, remoteAddr, err := conn.ReadFromUDP(sizeBuffer)
 		if err != nil {
 			log.Printf("Erreur de lecture UDP : %v\n", err)
 			continue
 		}
-		message := buffer[:n]
+		message := sizeBuffer[:n]
+	
 		address := TransportAddress{
 			ip:   remoteAddr.IP,
 			port: u.addr.Port, // Use the port of the server listener cause the remote as a UDP server listener
@@ -78,7 +78,7 @@ func (u *UDPServerListener) Listen() error {
 
 		err = channel.CollectMessage(transportMessage)
 		if err != nil {
-			log.Printf("Error collecting message from channel: %v\n", err)
+			log.Printf("Error while give the message to the channel: %v\n", err)
 			continue
 		}
 			
