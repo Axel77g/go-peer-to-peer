@@ -2,7 +2,6 @@ package peer_comunication
 
 import (
 	"net"
-	"peer-to-peer/app/peer_comunication"
 	"sync"
 	"time"
 )
@@ -83,7 +82,7 @@ func (u *UDPTransportChannel) CollectMessage(message TransportMessage) error {
 		go func() {
 			time.Sleep(20 * time.Second)
 			if !u.IsAlive() {
-				peer_comunication.UnregisterTransportChannel(u) // Unregister the channel if it is not alive
+				UnregisterTransportChannel(u) // Unregister the channel if it is not alive
 			}
 		}()
 	})
