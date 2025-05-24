@@ -23,7 +23,7 @@ func GetPeerByAddress(address TransportAddress)  IPeer {
 func RegisterTransportChannel(channel ITransportChannel) IPeer {
 	address := channel.GetAddress()
 	ip := address.GetIP().String()
-	log.Printf("Registering transport channel for address: %s\n", address.String())
+	log.Printf("Registering %s transport channel for address: %s\n", channel.GetProtocol(), address.String())
 
 	peersMutex.RLock()
     defer peersMutex.RUnlock()

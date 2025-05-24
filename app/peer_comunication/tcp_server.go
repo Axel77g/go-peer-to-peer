@@ -48,6 +48,7 @@ func (s *TCPServer) GetPort() int {
 
 func (s *TCPServer) Accept() (ITransportChannel, error) {
 	conn, err := s.Listener.Accept()
+	log.Println("New TCP connection received from", conn.RemoteAddr().String())
 	if err != nil {
 		return nil, err
 	}

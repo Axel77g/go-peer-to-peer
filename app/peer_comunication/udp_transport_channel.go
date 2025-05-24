@@ -1,7 +1,6 @@
 package peer_comunication
 
 import (
-	"errors"
 	"net"
 	"time"
 )
@@ -69,7 +68,8 @@ func (u *UDPTransportChannel) CollectMessage(message TransportMessage) error {
 	select {
 		case u.incoming <- message:
 		default:
-			return errors.New("channel full") // If the channel is full, return an error
+			<- u.incoming // If the channel is full, drop the oldest message
+			u.incoming <- message // and add the new message
 	}
 	u.lastMessageTime = time.Now()
 	return nil

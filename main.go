@@ -10,62 +10,13 @@ import (
 	"sync"
 )
 
-/* func main() {
-	wg := sync.WaitGroup{}
-	wg.Add(6)
-
-
-	log.Println("Socket ID:", shared.SOCKET_ID)
-
-	tcpServer := tcpcomunication.NewTCPServer()
-	peerManager := peer.GetPeerManager()
-	transferingQueue := filetransfering.NewTransferQueue()
-	networkInterfaceManager := discovery.NewNetworkInterfaceManager()
-	fileEvents := make(chan file_event.FileEvent)
-	fileWatcher := file_watcher.NewWatcher(shared.SHARED_DIRECTORY, 2*time.Second, fileEvents)
-
-	go func() {
-		for event := range fileEvents {
-			log.Println("Event reçu:", event.EventType, "sur le fichier:", event.FilePath)
-		}
-	}()
-
-	go func(){
-		for peer := range peerManager.Updates {
-			log.Println("Nouvelle peer détecté:", peer.ID)
-			if peer.TCPSocket != nil {
-				log.Println("Cette nouvelle paire a déjà une connexion TCP active:", peer.ID)
-				continue
-			}
-			socket,err := tcpcomunication.CreateTCPConnection(&peer)
-			if err != nil {
-				log.Println("Erreur de connexion TCP au peer:", err)
-				continue
-			}
-			peer.TCPSocket = &socket
-			peerManager.UpsertPeer(peer)
-		}
-	}()
-
-	go tcpServer.Listen()
-	go fileWatcher.Listen()
-	go discovery.Listen(shared.SOCKET_ID, peerManager)
-
-	go discovery.SenderLoop(shared.SOCKET_ID, networkInterfaceManager, peerManager)
-	go transferingQueue.Loop()
-
-	wg.Wait()
-}
-*/
-
-
-func main() {
-	wg := sync.WaitGroup{}
-	wg.Add(6)
-
-	udpServer := peer_comunication.GetUDPServerListener()
-	go udpServer.Listen() //open udp server listener
-	go func(){ // Handle new udp transport channel
+/**
+ * this is custom business logic to handle the new remote transport channel
+ * register a channel will create a peer in the peer manager if it does not exist and bind the channel to the peer
+ * then it will try to connect to the peer using the tcp protocol to establish a tcp connection
+ */
+func handleNewRemoteUDPTransportChannel(udpServer *peer_comunication.UDPServerListener) {
+	for {
 		select {
 			case channel := <- udpServer.NewTransportChannelEvent:
 				peer_comunication.RegisterTransportChannel(channel) //register the new udp transport channel
@@ -79,16 +30,34 @@ func main() {
 				transportChannel := peer_comunication.NewTCPTransportChannel(conn)
 				peer_comunication.RegisterTransportChannel(transportChannel) //register the new local tcp transport channel
 		}
-	}()
+	}
+}
 
-	tcpServer := peer_comunication.NewTCPServer(shared.TCPPort)
-	go tcpServer.Listen() //open tcp server listener
-	go func() { // Handle new tcp transport channel
+/**
+ * this is custom business logic to handle the new remote transport channel from TCP server
+ * register a channel will create a peer in the peer manager if it does not exist and bind the channel to the peer
+ */
+func hanldeNewRemoteTCPTransportChannel(tcpServer *peer_comunication.TCPServer) {
+	for {
 		select {
 			case channel := <- tcpServer.NewTransportChannelEvent:
 				peer_comunication.RegisterTransportChannel(channel) //register the new remote tcp transport channel
 		}
-	}()
+	}
+}
+
+
+func main() {
+	wg := sync.WaitGroup{}
+	wg.Add(6)
+
+	udpServer := peer_comunication.GetUDPServerListener()
+	go udpServer.Listen() //open udp server listener
+	go handleNewRemoteUDPTransportChannel(udpServer) // Handle new udp transport channel
+
+	tcpServer := peer_comunication.NewTCPServer(shared.TCPPort)
+	go tcpServer.Listen() //open tcp server listener
+	go hanldeNewRemoteTCPTransportChannel(tcpServer) // Handle new tcp transport channel
 
 	networkInterfaceManager := discovery.NewNetworkInterfaceManager()
 	go discovery.SenderLoop(shared.SOCKET_ID, networkInterfaceManager)
