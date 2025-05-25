@@ -32,6 +32,7 @@ func (u *UDPDiscoveryTransportChannel) OnMessage(channel peer_comunication.ITran
 			}
 			if parts[0] == "DISCOVER_PEER_REQUEST" {
 				address := channel.GetAddress()
+				log.Printf("Discovery request received from %s: %s\n", address.String(), messageContent)
 				
 				peer, existsPeer := peer_comunication.GetPeerByAddress(address)
 				if !existsPeer {
