@@ -74,7 +74,6 @@ func (u *UDPServerListener) Listen(handler ITransportChannelHandler) error {
 			log.Printf("No transport channel found for address: %s\n", address.ip.String())
 			continue
 		}
-		log.Printf("New UDP Received message from %s: %s\n", address.ip.String(), string(message))
 		err = channel.CollectMessage(transportMessage)
 		if err != nil {
 			log.Printf("Error while give the message to the channel: %v\n", err)
