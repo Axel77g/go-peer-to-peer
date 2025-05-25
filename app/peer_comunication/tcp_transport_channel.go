@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"log"
 	"net"
+	"peer-to-peer/app/shared"
 	"time"
 )
 
@@ -40,6 +41,29 @@ func (t *TCPTransportChannel) Send(content []byte) error {
 	}
 
 	return nil
+}
+
+func (t *TCPTransportChannel) SendIterator(size uint32, iterator shared.Iterator) error {
+	sizeBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(sizeBytes, size)
+	_, err := t.conn.Write(sizeBytes)
+	if err != nil {
+		return err
+	}
+
+	for iterator.Next() {
+		content, err := iterator.Current()
+		if err != nil {
+			log.Printf("Error getting current content from iterator: %v\n", err)
+			panic("Failed to get current content from iterator: " + err.Error())
+		}
+
+	
+		_, err = t.conn.Write(content)
+		if err != nil {
+			panic("Failed to send content: " + err.Error())
+		}	
+	}
 }
 
 func (t *TCPTransportChannel) CollectMessage(message TransportMessage) error {

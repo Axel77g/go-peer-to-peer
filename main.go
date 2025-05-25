@@ -17,7 +17,7 @@ func main() {
 	go udpServer.Listen(&handlers.UDPDiscoveryTransportChannel{}) //open udp server listener with the discovery handler
 
 	tcpServer := peer_comunication.NewTCPServer(shared.TCPPort)
-	go tcpServer.Listen(&handlers.TCPTransportChannelHandler{}) //open tcp server listener with the tcp handler
+	go tcpServer.Listen(&handlers.TCPControllerTransportChannelHandler{}) //open tcp server listener with the tcp handler
 	networkInterfaceManager := discovery.NewNetworkInterfaceManager()
 	go discovery.SenderLoop(shared.SOCKET_ID, networkInterfaceManager)
 

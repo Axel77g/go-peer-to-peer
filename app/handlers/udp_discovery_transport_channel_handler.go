@@ -66,5 +66,5 @@ func createTCPConnectionForIP(ip net.IP) {
 		panic(fmt.Sprintf("Failed to create TCP connection for IP %s: %v", ip, err))
 	}
 	log.Printf("TCP connection established for IP: %s\n", ip.String())
-	peer_comunication.NewTCPTransportChannel(conn, &TCPTransportChannelHandler{})
+	peer_comunication.NewTCPTransportChannel(conn, &TCPControllerTransportChannelHandler{})
 }

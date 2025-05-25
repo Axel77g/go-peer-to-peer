@@ -123,3 +123,12 @@ func (c *JSONLFileEventCollection) Merge(collectionB IFileEventCollection) IFile
 
 	return mergedCollection
 }
+
+func (c *JSONLFileEventCollection) GetBytesSize() int64 {
+	fileInfo, err := os.Stat(c.FilePath)
+	if err != nil {
+		println("Error getting file size:", err)
+		return 0
+	}
+	return fileInfo.Size()
+}
