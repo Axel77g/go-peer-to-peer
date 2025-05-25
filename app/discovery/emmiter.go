@@ -13,9 +13,7 @@ import (
 /*
 Emit on the broadcast network address
 */
-func discoveryRequestSender(socketID int, _ net.IP) {
-	ipString := "192.168.1.255"
-	ip := net.ParseIP(ipString)
+func discoveryRequestSender(socketID int, ip net.IP) {
 	address := peer_comunication.NewTransportAddress(ip, shared.UDPPort)
 	transportChannel := peer_comunication.NewUDPTransportChannel(address, &handlers.UDPDiscoveryEmitterTransportChannelHandler{})
 	if transportChannel == nil {

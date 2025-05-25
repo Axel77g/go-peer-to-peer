@@ -10,14 +10,14 @@ var (
     peersMutex = sync.RWMutex{}
 )
 
-func GetPeerByAddress(address TransportAddress)  IPeer {
+func GetPeerByAddress(address TransportAddress)  (IPeer, bool) {
 	ip := address.GetIP().String()
 	peersMutex.RLock()
     defer peersMutex.RUnlock()
 	if peer, exists := peers[ip]; exists {
-		return peer
+		return peer, true
 	}
-	return nil
+	return nil, false
 }
 
 func RegisterTransportChannel(channel ITransportChannel) IPeer {

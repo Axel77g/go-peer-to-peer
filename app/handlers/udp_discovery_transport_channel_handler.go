@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"peer-to-peer/app/peer_comunication"
 	"peer-to-peer/app/shared"
@@ -25,30 +24,43 @@ func (u *UDPDiscoveryTransportChannel) OnMessage(channel peer_comunication.ITran
 	parts := strings.Split(messageContent, ":")
 
 	if len(parts) > 1 {
-			if parts[1] == fmt.Sprintf("%d", shared.SOCKET_ID) && false {
-				log.Printf(
-					"Message from the same socket ID (%d) ignored: %s\n", shared.SOCKET_ID, messageContent)
+			if parts[1] == fmt.Sprintf("%d", shared.SOCKET_ID){
+				/* log.Printf(
+					"Message from the same socket ID (%d) ignored: %s\n", shared.SOCKET_ID, messageContent) */
 				return nil // Ignore the message if it is from the same socket ID
 			}
 			if parts[0] == "DISCOVER_PEER_REQUEST" {
 				address := channel.GetAddress()
-				peer := peer_comunication.GetPeerByAddress(address)
-				_, existsUDP := peer.GetTransportsChannels().GetByAddress(address)
-				if !existsUDP {
+				
+				peer, existsPeer := peer_comunication.GetPeerByAddress(address)
+				if !existsPeer {
 					peer_comunication.RegisterTransportChannel(channel)
-				}
-				_, exits := peer.GetTransportsChannels().GetByType("tcp")
-				//si aucune connection TCP n'existe pas, on en crée une a la reception d'une discovery request
-				if !exits {
-					conn, err := net.Dial("tcp", net.JoinHostPort(peer.GetIP().String(), strconv.Itoa(shared.TCPPort)))
-					if( err != nil) {
-						log.Println("Error connecting to peer via TCP:", err)
-						return nil
+				    createTCPConnectionForIP(address.GetIP())
+				}else{
+					_, existsUDP := peer.GetTransportsChannels().GetByAddress(address)
+					if !existsUDP {
+						peer_comunication.RegisterTransportChannel(channel)
 					}
-					peer_comunication.NewTCPTransportChannel(conn, &TCPTransportChannelHandler{})
+
+					_, exits := peer.GetTransportsChannels().GetByType("tcp")
+					//si aucune connection TCP n'existe pas, on en crée une a la reception d'une discovery request
+					if !exits {
+						createTCPConnectionForIP(peer.GetIP())
+					}
 				}
+				
+				
 			}
 		}
 
 	return nil
+}
+
+func createTCPConnectionForIP(ip net.IP) {
+	address := net.JoinHostPort(ip.String(), strconv.Itoa(shared.TCPPort))
+	conn, err := net.Dial("tcp", address)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to create TCP connection for IP %s: %v", ip, err))
+	}
+	peer_comunication.NewTCPTransportChannel(conn, &TCPTransportChannelHandler{})
 }

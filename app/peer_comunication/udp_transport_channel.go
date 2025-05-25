@@ -10,7 +10,6 @@ import (
 type UDPTransportChannel struct {
 	listener *UDPServerListener
 	address TransportAddress
-	incoming chan TransportMessage
 	lastMessageTime time.Time
 	monitorOnce      sync.Once
 	eventHandler ITransportChannelHandler // Handler for transport channel events
@@ -63,12 +62,6 @@ func (u *UDPTransportChannel) Close() error {
 }
 
 func (u *UDPTransportChannel) CollectMessage(message TransportMessage) error {
-	select {
-		case u.incoming <- message:
-		default:
-			<- u.incoming // If the channel is full, drop the oldest message
-			u.incoming <- message // and add the new message
-	}
 	u.lastMessageTime = time.Now()
 	u.monitorOnce.Do(func() {
 		go func() {
