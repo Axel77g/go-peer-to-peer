@@ -4,7 +4,7 @@ import "sync"
 
 type TransportChannelCollection struct {
 	channels []ITransportChannel
-	mutex             sync.RWMutex
+	mutex             sync.Mutex
 }
 
 func (t *TransportChannelCollection) Add(channel ITransportChannel) {
@@ -41,8 +41,8 @@ func (t *TransportChannelCollection) GetByAddress(address TransportAddress) (ITr
 }
 
 func (t *TransportChannelCollection) GetByType(channelType string) (ITransportChannel, bool) {
-	t.mutex.RLock()
-	defer t.mutex.RUnlock()
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 	for _, ch := range t.channels {
 		if ch.GetProtocol() == channelType {
 			return ch, true

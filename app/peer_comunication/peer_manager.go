@@ -7,13 +7,13 @@ import (
 
 var (
     peers = make(map[string]IPeer) //ip string to IPeer mapping
-    peersMutex = sync.RWMutex{}
+    peersMutex = sync.Mutex{}
 )
 
 func GetPeerByAddress(address TransportAddress)  (IPeer, bool) {
 	ip := address.GetIP().String()
-	peersMutex.RLock()
-    defer peersMutex.RUnlock()
+	peersMutex.Lock()
+    defer peersMutex.Unlock()
 	if peer, exists := peers[ip]; exists {
 		return peer, true
 	}
@@ -25,8 +25,8 @@ func RegisterTransportChannel(channel ITransportChannel) IPeer {
 	ip := address.GetIP().String()
 	log.Printf("Register %s transport channel for address: %s\n", channel.GetProtocol(), address.String())
 
-	peersMutex.RLock()
-    defer peersMutex.RUnlock()
+	peersMutex.Lock()
+    defer peersMutex.Unlock()
 
 	if peer, exists := peers[ip]; exists {
 		peer.AddTransportChannel(channel)
