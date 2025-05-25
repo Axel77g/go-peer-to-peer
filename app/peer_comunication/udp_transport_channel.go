@@ -7,25 +7,25 @@ import (
 	"time"
 )
 
-
 type UDPTransportChannel struct {
 	listener *UDPServerListener
 	address TransportAddress
 	incoming chan TransportMessage
-	stop    chan struct{}
 	lastMessageTime time.Time
 	monitorOnce      sync.Once
+	eventHandler ITransportChannelHandler // Handler for transport channel events
 }
 
-func NewUDPTransportChannel(address TransportAddress) *UDPTransportChannel {
+func NewUDPTransportChannel(address TransportAddress, handler ITransportChannelHandler) *UDPTransportChannel {
 	listener := GetUDPServerListener() //get the udp listener singleton
-	return &UDPTransportChannel{
+	channel := &UDPTransportChannel{
 		listener: listener,
 		address:  address,
-		incoming: make(chan TransportMessage, 100), // Buffered channel for incoming messages
-		stop:     make(chan struct{}),
 		lastMessageTime: time.Now(),
+		eventHandler: handler,
 	}
+	handler.OnOpen(channel) // Notify the handler that the channel is opened
+	return channel
 }
 
 func (u *UDPTransportChannel) GetPort() int {
@@ -58,17 +58,8 @@ func (u *UDPTransportChannel) Send(content []byte) error {
 
 func (u *UDPTransportChannel) Close() error {
 	// UDP does not have a close method like TCP, but we can return nil
+	u.eventHandler.OnClose(u)
 	return nil
-}
-
-func (u *UDPTransportChannel) Read() (TransportMessage, error) {
-	// Block until a message is available or the channel is closed
-	select {
-		case message := <-u.incoming:
-			return message, nil
-		case <-u.stop:
-			return TransportMessage{}, nil // Channel closed, no message available
-	}
 }
 
 func (u *UDPTransportChannel) CollectMessage(message TransportMessage) error {
@@ -84,10 +75,12 @@ func (u *UDPTransportChannel) CollectMessage(message TransportMessage) error {
 			time.Sleep(10 * time.Second)
 			log.Printf("Checking if UDP transport channel %s is alive\n", u.address.String())
 			if !u.IsAlive() {
+				u.Close()
 				UnregisterTransportChannel(u) // Unregister the channel if it is not alive
 			}
 		}()
 	})
+	u.eventHandler.OnMessage(u, message)
 	return nil
 }
 
@@ -97,5 +90,6 @@ func (u *UDPTransportChannel) GetProtocol() string {
 }
 
 func (u *UDPTransportChannel) IsAlive() bool {
+	log.Printf("Time since last message: %v", time.Since(u.lastMessageTime))
 	return time.Since(u.lastMessageTime) < 8*time.Second // Consider alive if last message was received within 30 seconds
 }

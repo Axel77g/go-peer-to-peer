@@ -8,7 +8,6 @@ import (
 var (
     peers = make(map[string]IPeer) //ip string to IPeer mapping
     peersMutex = sync.RWMutex{}
-	NewPeerAddedUpdate = make(chan IPeer, 10) // Channel to notify when a new peer is added
 )
 
 func GetPeerByAddress(address TransportAddress)  IPeer {
@@ -67,7 +66,6 @@ func AddPeer(peer IPeer) {
 	if _, exists := peers[ip]; !exists {
 		peers[ip] = peer
 	}
-	NewPeerAddedUpdate <- peer
 }
 
 func debug(){

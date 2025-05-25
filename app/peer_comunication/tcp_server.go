@@ -24,14 +24,13 @@ func NewTCPServer(port int) *TCPServer {
 		Listener: listener,
 		channels: make(map[TransportAddressKey]ITransportChannel),
 		port:     port,
-		NewTransportChannelEvent: make(chan ITransportChannel, 10),	
 	}
 }
 
-func (s *TCPServer) Listen() error {
+func (s *TCPServer) Listen(handler ITransportChannelHandler) error {
 	log.Printf("TCP server listening on port %d\n", s.port)
 	for {
-		channel, err := s.Accept()
+		channel, err := s.Accept(handler)
 		if err != nil {
 			log.Printf("Error accepting connection: %v\n", err)
 			continue
@@ -46,25 +45,19 @@ func (s *TCPServer) GetPort() int {
 }
 
 
-func (s *TCPServer) Accept() (ITransportChannel, error) {
+func (s *TCPServer) Accept(handler ITransportChannelHandler) (ITransportChannel, error) {
 	conn, err := s.Listener.Accept()
 	log.Println("New TCP connection received from", conn.RemoteAddr().String())
 	if err != nil {
 		return nil, err
 	}
 
-	channel := NewTCPTransportChannel(conn)
+	channel := NewTCPTransportChannel(conn, handler)
 	address := TransportAddress{
 		ip:   conn.RemoteAddr().(*net.TCPAddr).IP,
 		port: conn.RemoteAddr().(*net.TCPAddr).Port,
 	}
 	s.channels[address.GetKey()] = channel
-
-	select {
-		case s.NewTransportChannelEvent <- channel:
-		default:
-			log.Println("New TCP transport channel event channel is full, dropping the event, it can cause not expect behavior")
-	}
 
 	return channel, nil
 }

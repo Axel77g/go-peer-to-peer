@@ -2,7 +2,6 @@ package peer_comunication
 
 import (
 	"encoding/binary"
-	"errors"
 	"log"
 	"net"
 	"time"
@@ -10,17 +9,16 @@ import (
 
 type TCPTransportChannel struct {
 	conn     net.Conn
-	incoming chan TransportMessage
-	stop     chan struct{}
 	lastMessageTime time.Time
+	handler ITransportChannelHandler // Handler for transport channel events
 }
 
-func NewTCPTransportChannel(conn net.Conn) *TCPTransportChannel {
+func NewTCPTransportChannel(conn net.Conn, handler ITransportChannelHandler) *TCPTransportChannel {
 	t :=  &TCPTransportChannel{
 		conn:     conn,
-		incoming: make(chan TransportMessage, 100),
-		stop:     make(chan struct{}),
+		handler: handler,
 	}
+	handler.OnOpen(t) // Notify the handler that the channel is opened
 	go t.readMessageFromConn()
 	return t
 }
@@ -45,26 +43,14 @@ func (t *TCPTransportChannel) Send(content []byte) error {
 }
 
 func (t *TCPTransportChannel) CollectMessage(message TransportMessage) error {
-	select {
-		case t.incoming <- message:
-		default:
-			return errors.New("channel full") // If the channel is full, return an error
-	}
 	t.lastMessageTime = time.Now()
+	t.handler.OnMessage(t, message) // Notify the handler that a message has been collected
 	return nil
 }
 
-func (t *TCPTransportChannel) Read() (TransportMessage, error) {
-	select {
-		case message := <-t.incoming:
-			return message, nil
-		case <-t.stop:
-			return TransportMessage{}, nil
-	}
-}
 
 func (t *TCPTransportChannel) Close() error {
-	close(t.stop)
+	t.handler.OnClose(t) // Notify the handler that the channel is closed
 	return t.conn.Close()
 }
 
@@ -101,7 +87,7 @@ func (t *TCPTransportChannel) readMessageFromConn() error {
 		_, err := t.conn.Read(sizeBytes)
 		if err != nil {
 			if(err.Error() == "EOF" || err.Error() == "use of closed network connection") {
-				handleDisconnection(t)
+				t.Close()
 			}
 			log.Printf("Error reading TCP buffer from connection: %v\n", err)
 			return err
@@ -113,7 +99,7 @@ func (t *TCPTransportChannel) readMessageFromConn() error {
 		_, err = t.conn.Read(messageBytes)
 		if err != nil {
 			if(err.Error() == "EOF" || err.Error() == "use of closed network connection") {
-				handleDisconnection(t)
+				t.Close()
 			}
 			log.Printf("Error reading TCP buffer from connection: %v\n", err)
 			return err
@@ -126,14 +112,5 @@ func (t *TCPTransportChannel) readMessageFromConn() error {
 			log.Printf("Error collecting message from channel: %v\n", err)
 			return err
 		}
-	}
-}
-
-func handleDisconnection(channel ITransportChannel) {
-	address := channel.GetAddress()
-	log.Printf("Handling disconnection for address: %s\n", address.String())
-	UnregisterTransportChannel(channel)
-	if err := channel.Close(); err != nil {
-		log.Printf("Error closing channel: %v\n", err)
 	}
 }

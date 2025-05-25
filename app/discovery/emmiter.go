@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"peer-to-peer/app/handlers"
 	"peer-to-peer/app/peer_comunication"
 	"peer-to-peer/app/shared"
 	"time"
@@ -16,7 +17,7 @@ func discoveryRequestSender(socketID int, _ net.IP) {
 	ipString := "192.168.1.255"
 	ip := net.ParseIP(ipString)
 	address := peer_comunication.NewTransportAddress(ip, shared.UDPPort)
-	transportChannel := peer_comunication.NewUDPTransportChannel(address)
+	transportChannel := peer_comunication.NewUDPTransportChannel(address, &handlers.UDPDiscoveryEmitterTransportChannelHandler{})
 	if transportChannel == nil {
 		log.Println("Failed to create UDP transport channel")
 		return

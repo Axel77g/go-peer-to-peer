@@ -19,18 +19,18 @@ func NewTransportMessage(size uint32, content []byte, from TransportAddress) Tra
 	}
 }
 
-func (t *TransportMessage) getSize() uint32 {
+func (t *TransportMessage) GetSize() uint32 {
 	return t.size
 }
 
-func (t *TransportMessage) getContent() []byte {
+func (t *TransportMessage) GetContent() []byte {
 	return t.content
 }
 
-func (t *TransportMessage) getFrom() TransportAddress {
+func (t *TransportMessage) GetFrom() TransportAddress {
 	return t.from
 }
 
-func (t *TransportMessage) getTime() int64 {
+func (t *TransportMessage) GetTime() int64 {
 	return t.time
 }
