@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"peer-to-peer/app/peer_comunication"
 	"peer-to-peer/app/shared"
@@ -57,6 +58,7 @@ func (u *UDPDiscoveryTransportChannel) OnMessage(channel peer_comunication.ITran
 }
 
 func createTCPConnectionForIP(ip net.IP) {
+	log.Printf("Creating client TCP connection for IP: %s\n", ip.String())
 	address := net.JoinHostPort(ip.String(), strconv.Itoa(shared.TCPPort))
 	conn, err := net.Dial("tcp", address)
 	if err != nil {

@@ -36,7 +36,7 @@ func (s *TCPServer) Listen(handler ITransportChannelHandler) error {
 			continue
 		}
 		addr := channel.GetAddress()
-		log.Printf("Accepted connection from %s\n", addr.String())
+		log.Printf("New TCP connection received on server from %s\n", addr.String())
 	}
 }
 
@@ -47,7 +47,6 @@ func (s *TCPServer) GetPort() int {
 
 func (s *TCPServer) Accept(handler ITransportChannelHandler) (ITransportChannel, error) {
 	conn, err := s.Listener.Accept()
-	log.Println("New TCP connection received from", conn.RemoteAddr().String())
 	if err != nil {
 		return nil, err
 	}
