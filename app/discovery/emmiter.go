@@ -30,6 +30,7 @@ func discoveryRequestSender(socketID int, ip net.IP) {
 }
 
 func sender(networkInterfaceManager *NetworkInterfaceManager, socketID int) {
+	log.Printf("Sending discovery request to all available IP interfaces with socket ID %d\n", socketID)
 	for _, ip := range networkInterfaceManager.AvailableIpInterface {
 		broadcastAddr := ip.getBroadcastAddress()
 		discoveryRequestSender(socketID, broadcastAddr)
