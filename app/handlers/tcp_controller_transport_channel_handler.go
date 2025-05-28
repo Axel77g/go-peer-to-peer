@@ -2,12 +2,11 @@ package handlers
 
 import (
 	"log"
-	file_event "peer-to-peer/app/files/event"
 	"peer-to-peer/app/peer_comunication"
 	"peer-to-peer/app/shared"
 )
 
-type TCPControllerTransportChannelHandler struct {}
+type TCPControllerTransportChannelHandler struct{}
 
 func (t *TCPControllerTransportChannelHandler) OnClose(channel peer_comunication.ITransportChannel) {
 	// Unregister the transport channel when it is closed
@@ -20,7 +19,7 @@ func (t *TCPControllerTransportChannelHandler) OnOpen(channel peer_comunication.
 
 	address := channel.GetAddress()
 	isClientChannel := address.GetPort() == shared.TCPPort // si le port de destination est le port du serveur, c'est un channel client
-	if isClientChannel { // on pull au connection si on est client
+	if isClientChannel {                                   // on pull au connection si on est client
 		t.pullRemoteEvents(channel)
 	}
 	//on connect in tcp ask pull to remote peer is directory shallow
@@ -31,17 +30,17 @@ func (t *TCPControllerTransportChannelHandler) OnMessage(channel peer_comunicati
 	log.Printf("Received message on TCP channel: %s\n", string(message.GetContent()))
 
 	if string(message.GetContent()) == "PULL_EVENTS_REQUEST" {
-		collection := file_event.NewJSONLFileEventCollection("events.jsonl")
-		size := collection.GetBytesSize()
+		/* collection := file_event.NewJSONLFileEventCollection("events.jsonl") */
+		/* size := collection.GetBytesSize()
 		iterator := collection.GetIterator()
-		
-	
 
+
+		*/
 	}
 
 	return nil
 }
 
 func (t *TCPControllerTransportChannelHandler) pullRemoteEvents(channel peer_comunication.ITransportChannel) {
-	channel.Send([]byte("PULL_EVENTS_REQUEST"));
+	channel.Send([]byte("PULL_EVENTS_REQUEST"))
 }

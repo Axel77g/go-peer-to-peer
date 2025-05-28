@@ -1,4 +1,4 @@
-package file_event
+/* package file_event
 
 import (
 	"bytes"
@@ -84,3 +84,4 @@ func (b *ByteEventIterator) GetBytesSize() int64 {
 	}
 	return int64(len(b.currentData))
 }
+*/
