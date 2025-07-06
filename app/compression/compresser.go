@@ -39,11 +39,11 @@ func (c *GzipCompresser) Compress(data []byte) ([]byte, error) {
     if err != nil {
         return nil, err
     }
+    defer writer.Close() // Ensure resources are always released
     
     // Write data to the gzip writer
     _, err = writer.Write(data)
     if err != nil {
-        writer.Close()
         return nil, err
     }
     

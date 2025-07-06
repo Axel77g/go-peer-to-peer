@@ -28,52 +28,47 @@ func NewAESEncrypter(key []byte) (*AESEncrypter, error) {
 }
 
 func (e *AESEncrypter) Encrypt(data []byte) ([]byte, error) {
-	// Create a new cipher block from the key
 	block, err := aes.NewCipher(e.Key)
 	if err != nil {
 		return nil, err
 	}
 
-	// The IV needs to be unique, but not secure. Therefore, it's common to
-	// include it at the beginning of the ciphertext.
-	ciphertext := make([]byte, aes.BlockSize+len(data))
-	iv := ciphertext[:aes.BlockSize]
+	aesGCM, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
 
-	// Fill iv with random bytes
+	iv := make([]byte, 12) // 12 bytes for GCM
 	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
 		return nil, err
 	}
 
-	// Use CFB mode for encryption
-	stream := cipher.NewCFBEncrypter(block, iv)
-	stream.XORKeyStream(ciphertext[aes.BlockSize:], data)
-
-	return ciphertext, nil
+	ciphertext := aesGCM.Seal(nil, iv, data, nil)
+	return append(iv, ciphertext...), nil
 }
 
 func (e *AESEncrypter) Decrypt(data []byte) ([]byte, error) {
-	// Check if data is long enough to contain IV and at least some ciphertext
-	if len(data) < aes.BlockSize {
-		return nil, errors.New("ciphertext too short")
-	}
-
-	// Create a new cipher block from the key
 	block, err := aes.NewCipher(e.Key)
 	if err != nil {
 		return nil, err
 	}
 
-	// Extract the IV from the beginning of the ciphertext
-	iv := data[:aes.BlockSize]
-	ciphertext := data[aes.BlockSize:]
+	aesGCM, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
 
-	// Create the plaintext with the same length as ciphertext
-	plaintext := make([]byte, len(ciphertext))
+	ivSize := 12 // 12 bytes for GCM
+	if len(data) < ivSize {
+		return nil, errors.New("ciphertext too short")
+	}
+	iv := data[:ivSize]
+	ciphertext := data[ivSize:]
 
-	// Use CFB mode for decryption
-	stream := cipher.NewCFBDecrypter(block, iv)
-	stream.XORKeyStream(plaintext, ciphertext)
-
+	plaintext, err := aesGCM.Open(nil, iv, ciphertext, nil)
+	if err != nil {
+		return nil, err
+	}
 	return plaintext, nil
 }
 
