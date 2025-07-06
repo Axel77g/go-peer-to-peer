@@ -35,8 +35,34 @@ func (t *TCPControllerTransportChannelHandler) OnMessage(channel peer_comunicati
 
 	if stringContent == "PULL_EVENTS_REQUEST" {
 		collection := file_event.NewJSONLFileEventCollection("events.jsonl")
+		collection.Append(file_event.NewCreateFileSystemEvent(&shared.File{
+			Name: "events.jsonl",
+			Path: "events.jsonl",
+			Checksum: "dummy-checksum",
+		}))
+		collection.Append(file_event.NewCreateFileSystemEvent(&shared.File{
+			Name: "events.jsonl",
+			Path: "events.jsonl",
+			Checksum: "dummy-checksum",
+		}))
+		collection.Append(file_event.NewCreateFileSystemEvent(&shared.File{
+			Name: "events.jsonl",
+			Path: "events.jsonl",
+			Checksum: "dummy-checksum",
+		}))
+		collection.Append(file_event.NewCreateFileSystemEvent(&shared.File{
+			Name: "events.jsonl",
+			Path: "events.jsonl",
+			Checksum: "dummy-checksum",
+		}))
 		size := collection.GetBytesSize()
+		log.Printf("Sending events to remote peer, size: %d bytes\n", size)
 		iterator := collection.GetAll()
+		if iterator == nil {
+			log.Println("No events found to send.")
+			return nil
+		}
+		defer iterator.Close()
 		adapter := file_event.NewFileEventIteratorAdapter(iterator)
 		messageContent := []byte("PULL_EVENTS_RESPONSE")
 		channel.SendIterator(uint32(size), messageContent, adapter)

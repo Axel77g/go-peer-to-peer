@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	file_event "peer-to-peer/app/files/event"
@@ -47,48 +48,64 @@ func (t *TCPTransportChannel) Send(content []byte) error {
 }
 
 func (t *TCPTransportChannel) SendIterator(size uint32, message []byte, iterator shared.Iterator) error {
-	sizeBytes := make([]byte, 4)
-	binary.BigEndian.PutUint32(sizeBytes, size + uint32(len(message)))
-	_, err := t.conn.Write(sizeBytes)
-	if err != nil {
-		return err
-	}
-
-	// Send the initial message
-	_, err = t.conn.Write(message)
-
-	for iterator.Next() {
-		content, err := iterator.Current()
-		if err != nil {
-			log.Printf("Error getting current content from iterator: %v\n", err)
-			panic("Failed to get current content from iterator: " + err.Error())
-		}
-		
-		// Convert any to bytes
-		var contentBytes []byte
-		switch v := content.(type) {
-		case []byte:
-			contentBytes = v
-		case string:
-			contentBytes = []byte(v)
-		case file_event.FileEvent:
-			jsonBytes, err := json.Marshal(v)
-			if err != nil {
-				log.Printf("Error marshaling FileEvent to JSON: %v\n", err)
-				contentBytes = []byte(fmt.Sprintf("%v", v))
-			} else {
-				contentBytes = jsonBytes
-			}
-		default:
-			contentBytes = []byte(fmt.Sprintf("%v", v))
-		}
-		
-		_, err = t.conn.Write(contentBytes)
-		if err != nil {
-			panic("Failed to send content: " + err.Error())
-		}
-	}
-	return nil
+    // Préparer un buffer pour tout le contenu
+    totalSize := 4 + uint32(len(message)) // 4 bytes pour la taille + message initial
+    
+    // Calculer la taille totale en parcourant l'iterator une première fois
+    var contents [][]byte
+    for iterator.Next() {
+        content, err := iterator.Current()
+        if err != nil {
+            log.Printf("Error getting current content from iterator: %v\n", err)
+            return fmt.Errorf("failed to get current content from iterator: %w", err)
+        }
+        
+        // Convert any to bytes
+        var contentBytes []byte
+        switch v := content.(type) {
+        case []byte:
+            contentBytes = v
+        case string:
+            contentBytes = []byte(v)
+        case file_event.FileEvent:
+            jsonBytes, err := json.Marshal(v)
+            if err != nil {
+                log.Printf("Error marshaling FileEvent to JSON: %v\n", err)
+                contentBytes = []byte(fmt.Sprintf("%v", v))
+            } else {
+                contentBytes = jsonBytes
+            }
+        default:
+            contentBytes = []byte(fmt.Sprintf("%v", v))
+        }
+        
+        contents = append(contents, contentBytes)
+        totalSize += uint32(len(contentBytes))
+    }
+    
+    // Créer le buffer final
+    buffer := make([]byte, 0, totalSize)
+    
+    // Ajouter la taille totale
+    sizeBytes := make([]byte, 4)
+    binary.BigEndian.PutUint32(sizeBytes, totalSize-4) // -4 car on n'inclut pas les 4 bytes de taille dans la taille
+    buffer = append(buffer, sizeBytes...)
+    
+    // Ajouter le message initial
+    buffer = append(buffer, message...)
+    
+    // Ajouter tout le contenu de l'iterator
+    for _, contentBytes := range contents {
+        buffer = append(buffer, contentBytes...)
+    }
+    
+    // Envoyer tout en un seul Write
+    _, err := t.conn.Write(buffer)
+    if err != nil {
+        return fmt.Errorf("failed to send content: %w", err)
+    }
+    
+    return nil
 }
 
 func (t *TCPTransportChannel) CollectMessage(message TransportMessage) error {
@@ -131,7 +148,7 @@ func (t *TCPTransportChannel) readMessageFromConn() error {
 	for {
 		// Read the size of the message
 		sizeBytes := make([]byte, 4)
-		_, err := t.conn.Read(sizeBytes)
+		_, err := io.ReadFull(t.conn, sizeBytes)
 		if err != nil {
 			if err.Error() == "EOF" || err.Error() == "use of closed network connection" {
 				t.Close()
@@ -143,7 +160,7 @@ func (t *TCPTransportChannel) readMessageFromConn() error {
 
 		// Read the message
 		messageBytes := make([]byte, size)
-		_, err = t.conn.Read(messageBytes)
+		_, err = io.ReadFull(t.conn, messageBytes)
 		if err != nil {
 			if err.Error() == "EOF" || err.Error() == "use of closed network connection" {
 				t.Close()
