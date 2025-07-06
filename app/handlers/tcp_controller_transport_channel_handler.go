@@ -28,33 +28,14 @@ func (t *TCPControllerTransportChannelHandler) OnOpen(channel peer_comunication.
 }
 
 func (t *TCPControllerTransportChannelHandler) OnMessage(channel peer_comunication.ITransportChannel, message peer_comunication.TransportMessage) error {
-	log.Printf("Received message on TCP channel: %s\n", string(message.GetContent()))
+	//log.Printf("Received message on TCP channel: %s\n", string(message.GetContent()))
+	log.Printf("Received message size: %d bytes\n", message.GetSize())
 
 	content := message.GetContent()
 	stringContent := string(content)
 
 	if stringContent == "PULL_EVENTS_REQUEST" {
 		collection := file_event.NewJSONLFileEventCollection("events.jsonl")
-		collection.Append(file_event.NewCreateFileSystemEvent(&shared.File{
-			Name: "events.jsonl",
-			Path: "events.jsonl",
-			Checksum: "dummy-checksum",
-		}))
-		collection.Append(file_event.NewCreateFileSystemEvent(&shared.File{
-			Name: "events.jsonl",
-			Path: "events.jsonl",
-			Checksum: "dummy-checksum",
-		}))
-		collection.Append(file_event.NewCreateFileSystemEvent(&shared.File{
-			Name: "events.jsonl",
-			Path: "events.jsonl",
-			Checksum: "dummy-checksum",
-		}))
-		collection.Append(file_event.NewCreateFileSystemEvent(&shared.File{
-			Name: "events.jsonl",
-			Path: "events.jsonl",
-			Checksum: "dummy-checksum",
-		}))
 		size := collection.GetBytesSize()
 		log.Printf("Sending events to remote peer, size: %d bytes\n", size)
 		iterator := collection.GetAll()
