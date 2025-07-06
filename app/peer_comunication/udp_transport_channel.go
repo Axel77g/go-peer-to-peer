@@ -3,6 +3,7 @@ package peer_comunication
 import (
 	"log"
 	"net"
+	"peer-to-peer/app/shared"
 	"sync"
 	"time"
 )
@@ -85,4 +86,11 @@ func (u *UDPTransportChannel) GetProtocol() string {
 func (u *UDPTransportChannel) IsAlive() bool {
 	log.Printf("Time since last message: %v", time.Since(u.lastMessageTime))
 	return time.Since(u.lastMessageTime) < 8*time.Second // Consider alive if last message was received within 30 seconds
+}
+
+func (u *UDPTransportChannel) SendIterator(size uint32, iterator shared.Iterator) error {
+	// UDP doesn't support iterators in the same way as TCP
+	// This is a simplified implementation - you might want to implement chunking
+	log.Printf("Warning: SendIterator on UDP is not fully implemented - size: %d", size)
+	return nil
 }

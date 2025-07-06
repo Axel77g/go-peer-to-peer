@@ -1,10 +1,6 @@
-/* package file_event
+package file_event
 
-import (
-	"bytes"
-	"encoding/gob"
-	"os"
-)
+/*
 
 type ByteEventIterator struct {
 	src         IFileEventIterator

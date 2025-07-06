@@ -5,4 +5,5 @@ type IFileEventCollection interface {
 	GetAll() IFileEventIterator
 	Merge(collectionB IFileEventCollection) IFileEventCollection
 	GetBytesSize() int64
+	FromBytes(bytes []byte) error
 }

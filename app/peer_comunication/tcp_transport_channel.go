@@ -2,8 +2,11 @@ package peer_comunication
 
 import (
 	"encoding/binary"
+	"encoding/json"
+	"fmt"
 	"log"
 	"net"
+	file_event "peer-to-peer/app/files/event"
 	"peer-to-peer/app/shared"
 	"time"
 )
@@ -43,22 +46,44 @@ func (t *TCPTransportChannel) Send(content []byte) error {
 	return nil
 }
 
-func (t *TCPTransportChannel) SendIterator(size uint32, iterator shared.Iterator) error {
+func (t *TCPTransportChannel) SendIterator(size uint32, message []byte, iterator shared.Iterator) error {
 	sizeBytes := make([]byte, 4)
-	binary.BigEndian.PutUint32(sizeBytes, size)
+	binary.BigEndian.PutUint32(sizeBytes, size + uint32(len(message)))
 	_, err := t.conn.Write(sizeBytes)
 	if err != nil {
 		return err
 	}
 
+	// Send the initial message
+	_, err = t.conn.Write(message)
+
 	for iterator.Next() {
-		/* content, err := iterator.Current() */
+		content, err := iterator.Current()
 		if err != nil {
 			log.Printf("Error getting current content from iterator: %v\n", err)
 			panic("Failed to get current content from iterator: " + err.Error())
 		}
-
-		/* _, err = t.conn.Write(content) */
+		
+		// Convert any to bytes
+		var contentBytes []byte
+		switch v := content.(type) {
+		case []byte:
+			contentBytes = v
+		case string:
+			contentBytes = []byte(v)
+		case file_event.FileEvent:
+			jsonBytes, err := json.Marshal(v)
+			if err != nil {
+				log.Printf("Error marshaling FileEvent to JSON: %v\n", err)
+				contentBytes = []byte(fmt.Sprintf("%v", v))
+			} else {
+				contentBytes = jsonBytes
+			}
+		default:
+			contentBytes = []byte(fmt.Sprintf("%v", v))
+		}
+		
+		_, err = t.conn.Write(contentBytes)
 		if err != nil {
 			panic("Failed to send content: " + err.Error())
 		}

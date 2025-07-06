@@ -17,6 +17,21 @@ func NewJSONLFileEventCollection(filePath string) *JSONLFileEventCollection {
 	}
 }
 
+func(c *JSONLFileEventCollection) FromBytes(bytes []byte) error {
+	file, err := os.OpenFile(c.FilePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		println("Error opening file:", err)
+	}
+	defer file.Close()
+	
+	_, err = file.Write(bytes)
+	if err != nil {
+		println("Error writing bytes to file:", err)
+	}
+
+	return nil
+}
+
 func (c *JSONLFileEventCollection) OnIteratorClose() {
 	current := c.activeIterators.Add(-1)
 	if current < 0 {
