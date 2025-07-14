@@ -9,5 +9,6 @@ type IFileEventCollection interface {
 	GetBytesSize() int64
 	FromBytes(bytes []byte) error
 	SaveToFile(filePath string) error
+	GetChecksum() (string, error)
 	Debug()
 }

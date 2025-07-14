@@ -71,11 +71,16 @@ func (t *TCPControllerTransportChannelHandler) OnMessage(channel peer_comunicati
 		}
 		log.Printf("Events from remote saved successfully in events_from_remote.jsonl")
 
-		err = eventManager.MergeAndSave(remote_collection)
+		hasChanges, err := eventManager.MergeAndSave(remote_collection)
 		if err != nil {
 			log.Printf("Error merging and saving events: %v\n", err)
 			eventManager.Unlock()
 			return err
+		}
+
+		if hasChanges {
+			log.Println("Changes detected, broadcasting events.")
+			eventManager.BroadcastEvents()
 		}
 
 		return nil
@@ -98,11 +103,16 @@ func (t *TCPControllerTransportChannelHandler) OnMessage(channel peer_comunicati
 		}
 		log.Printf("Events to remote saved successfully in events_to_remote.jsonl")
 
-		err = eventManager.MergeAndSave(remote_collection)
+		hasChanges, err := eventManager.MergeAndSave(remote_collection)
 		if err != nil {
 			log.Printf("Error merging and saving events: %v\n", err)
 			eventManager.Unlock()
 			return err
+		}
+
+		if hasChanges {
+			log.Println("Changes detected, broadcasting events.")
+			eventManager.BroadcastEvents()
 		}
 
 		return nil

@@ -1,7 +1,10 @@
 package file_event
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
+	"io"
 	"log"
 	"os"
 	"peer-to-peer/app/shared"
@@ -222,4 +225,25 @@ func (c *JSONLFileEventCollection) SaveToFile(filePath string) error {
 	}
 
 	return nil
+}
+
+func (c *JSONLFileEventCollection) GetChecksum() (string, error) {
+	if c.activeIterators.Load() > 0 {
+		println("Error: Cannot get checksum while iterators are active")
+		return "", nil
+	}
+	c.activeIterators.Add(1)
+	defer c.activeIterators.Add(-1)
+	file, err := os.Open(c.FilePath)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	hasher := md5.New()
+	if _, err := io.Copy(hasher, file); err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(hasher.Sum(nil)), nil
 }

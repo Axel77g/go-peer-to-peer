@@ -55,24 +55,41 @@ func (m *EventManager) GetCollection() IFileEventCollection {
 
 // MergeAndSave merges a remote collection into the managed collection and saves the result to file.
 // This operation is thread-safe.
-func (m *EventManager) MergeAndSave(remoteCollection IFileEventCollection) error {
+func (m *EventManager) MergeAndSave(remoteCollection IFileEventCollection) (bool, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
+	baseChecksum, err := m.collection.GetChecksum()
+	if err != nil {
+		log.Printf("Error getting base collection checksum: %v", err)
+		return false, fmt.Errorf("failed to get base collection checksum: %w", err)
+	}
+
+	remoteChecksum, err := remoteCollection.GetChecksum()
+	if err != nil {
+		log.Printf("Error getting remote collection checksum: %v", err)
+		return false, fmt.Errorf("failed to get remote collection checksum: %w", err)
+	}
+
+	if baseChecksum == remoteChecksum {
+		log.Println("No changes detected, skipping merge.")
+		return false, nil
+	}
+
 	merged := remoteCollection.Merge(m.collection)
 	if merged == nil {
-		return fmt.Errorf("error merging collections")
+		return false, fmt.Errorf("error merging collections")
 	}
 
 	// Save the merged collection to the file
-	err := merged.SaveToFile("events.jsonl")
+	err = merged.SaveToFile("events.jsonl")
 	if err != nil {
 		log.Printf("Error saving merged collection: %v", err)
-		return fmt.Errorf("failed to save merged collection: %w", err)
+		return false, fmt.Errorf("failed to save merged collection: %w", err)
 	}
 	m.collection = NewJSONLFileEventCollection("events.jsonl", false)
 	log.Println("Merged and saved events successfully.")
-	return nil
+	return true, nil
 }
 
 // SaveCollection explicitly saves the current state of the collection to file.
