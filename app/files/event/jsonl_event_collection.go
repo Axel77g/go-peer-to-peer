@@ -23,13 +23,13 @@ func NewJSONLFileEventCollection(filePath string, delete bool) *JSONLFileEventCo
 	}
 }
 
-func(c *JSONLFileEventCollection) FromBytes(bytes []byte) error {
+func (c *JSONLFileEventCollection) FromBytes(bytes []byte) error {
 	file, err := os.OpenFile(c.FilePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		println("Error opening file:", err)
 	}
 	defer file.Close()
-	
+
 	_, err = file.Write(bytes)
 	if err != nil {
 		println("Error writing bytes to file:", err)
@@ -83,7 +83,7 @@ func (c *JSONLFileEventCollection) Merge(collectionB IFileEventCollection) IFile
 
 	// On crée une nouvelle collection temporaire
 	mergedPath := c.FilePath + "_merged.jsonl"
-	mergedCollection := NewJSONLFileEventCollection(mergedPath,true)
+	mergedCollection := NewJSONLFileEventCollection(mergedPath, true)
 
 	// Pour éviter les doublons
 	seen := make(map[string]struct{})
@@ -183,5 +183,37 @@ func (c *JSONLFileEventCollection) Debug() {
 	}
 
 	println("End of JSONLFileEventCollection Debug\n")
-	
+
+}
+
+func (c *JSONLFileEventCollection) SaveToFile(filePath string) error {
+	file, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		println("Error opening file:", err)
+		return err
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	iterator := c.GetAll()
+	defer func() {
+		iterator.Close()
+		if err := os.Remove(c.FilePath); err != nil {
+			println("Error removing old file:", err)
+		}
+	}()
+
+	for iterator.Next() {
+		event, err := iterator.Current()
+		if err != nil {
+			println("Error reading event:", err)
+			return err
+		}
+		if err := encoder.Encode(event); err != nil {
+			println("Error writing event:", err)
+			return err
+		}
+	}
+
+	return nil
 }

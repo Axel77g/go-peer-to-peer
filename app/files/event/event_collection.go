@@ -6,5 +6,6 @@ type IFileEventCollection interface {
 	Merge(collectionB IFileEventCollection) IFileEventCollection
 	GetBytesSize() int64
 	FromBytes(bytes []byte) error
+	SaveToFile(filePath string) error
 	Debug()
 }

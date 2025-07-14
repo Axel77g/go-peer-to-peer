@@ -68,23 +68,14 @@ func (t *TCPControllerTransportChannelHandler) OnMessage(channel peer_comunicati
 		log.Printf("Events from remote saved successfully in events_from_remote.jsonl")
 
 		local_collection := file_event.NewJSONLFileEventCollection("events.jsonl", false)
-		local_collection.Debug()
 
-		remote_collection.Debug()
 		merged := remote_collection.Merge(local_collection)
-		merged.Debug()
-
-		//delete the remote collection file using os.Remove
-		/* err = os.Remove(remote_collection.FilePath)
-		if err != nil {
-			log.Printf("Error deleting remote collection file: %v\n", err)
-		} else {
-			log.Printf("Remote collection file %s deleted successfully", remote_collection.FilePath)
-		} */
 
 		if merged == nil {
 			log.Println("Error merging collections")
 		}
+
+		//set the merged collection as the new local collection
 
 		return nil
 	}
