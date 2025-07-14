@@ -44,7 +44,6 @@ func (c *JSONLFileEventCollection) FromBytes(bytes []byte) error {
 }
 
 func (c *JSONLFileEventCollection) OnIteratorClose() {
-	println("Closing iterator")
 	current := c.activeIterators.Add(-1)
 	if current < 0 {
 		c.activeIterators.Store(0)
@@ -73,7 +72,6 @@ func (c *JSONLFileEventCollection) Append(event shared.FileEvent) {
 }
 
 func (c *JSONLFileEventCollection) GetAll(reason string) IFileEventIterator {
-	println("Getting all events from collection for reason:", reason, "FilePath:", c.FilePath)
 	c.activeIterators.Add(1)
 	iterator, err := NewJSONLFileEventIterator(c.FilePath, c)
 	if err != nil {

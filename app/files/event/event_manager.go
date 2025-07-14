@@ -101,6 +101,7 @@ func (m *EventManager) SaveCollection() error {
 }
 
 func (m *EventManager) BroadcastEvents() {
+	log.Println("Broadcasting events to all peers.")
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	iterator := m.collection.GetAll("broadcasting events")

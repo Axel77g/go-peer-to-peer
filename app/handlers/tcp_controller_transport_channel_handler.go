@@ -59,7 +59,7 @@ func (t *TCPControllerTransportChannelHandler) OnMessage(channel peer_comunicati
 	pullEventResponseLen := len("PULL_EVENTS_RESPONSE")
 	if len(content) > pullEventResponseLen && stringContent[:pullEventResponseLen] == "PULL_EVENTS_RESPONSE" {
 		eventsData := content[pullEventResponseLen:]
-		log.Printf("Received message content: %s\n", string(eventsData))
+		log.Printf("Received message PULL_EVENTS_RESPONSE, size: %d bytes\n", len(eventsData))
 
 		address := channel.GetAddress()
 
@@ -92,7 +92,7 @@ func (t *TCPControllerTransportChannelHandler) OnMessage(channel peer_comunicati
 	pushEventResponseLen := len("PUSH_EVENTS")
 	if len(content) > pushEventResponseLen && stringContent[:pushEventResponseLen] == "PUSH_EVENTS" {
 		eventsData := content[pushEventResponseLen:]
-		log.Printf("Received push events data: %s\n", string(eventsData))
+		log.Printf("Received message PUSH_EVENTS, size: %d bytes\n", len(eventsData))
 
 		address := channel.GetAddress()
 		remote_collection := file_event.NewJSONLFileEventCollection("push_events_to_remote_"+address.String()+".jsonl", true)
