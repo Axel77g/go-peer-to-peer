@@ -57,7 +57,6 @@ func (c *JSONLFileEventCollection) Append(event shared.FileEvent) {
 	}
 
 	file, err := os.OpenFile(c.FilePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
-	log.Println("Appending event:", event, "to file:", c.FilePath, "Active Iterators:", c.activeIterators.Load())
 
 	if err != nil {
 		log.Println("Error opening file:", err)
