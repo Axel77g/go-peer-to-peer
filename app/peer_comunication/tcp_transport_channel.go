@@ -30,6 +30,7 @@ func NewTCPTransportChannel(conn net.Conn, handler ITransportChannelHandler) *TC
 
 func (t *TCPTransportChannel) Send(content []byte) error {
 	// Send the size of the message
+	println("Sending message of size on TCP socket:", len(content))
 	size := uint32(len(content))
 	sizeBytes := make([]byte, 4)
 	binary.BigEndian.PutUint32(sizeBytes, size)

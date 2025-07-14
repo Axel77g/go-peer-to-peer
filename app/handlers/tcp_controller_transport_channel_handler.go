@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"log"
-	"os"
 	file_event "peer-to-peer/app/files/event"
 	"peer-to-peer/app/peer_comunication"
 	"peer-to-peer/app/shared"
@@ -36,7 +35,7 @@ func (t *TCPControllerTransportChannelHandler) OnMessage(channel peer_comunicati
 	stringContent := string(content)
 
 	if stringContent == "PULL_EVENTS_REQUEST" {
-		collection := file_event.NewJSONLFileEventCollection("events.jsonl")
+		collection := file_event.NewJSONLFileEventCollection("events.jsonl",false)
 		size := collection.GetBytesSize()
 		log.Printf("Sending events to remote peer, size: %d bytes\n", size)
 		iterator := collection.GetAll()
@@ -56,8 +55,11 @@ func (t *TCPControllerTransportChannelHandler) OnMessage(channel peer_comunicati
 	pullEventResponseLen := len("PULL_EVENTS_RESPONSE")
 	if len(content) > pullEventResponseLen && stringContent[:pullEventResponseLen] == "PULL_EVENTS_RESPONSE" {
 		eventsData := content[pullEventResponseLen:]
+		log.Printf("Received message content: %s\n", string(eventsData))
+
 		address:= channel.GetAddress()
-		remote_collection := file_event.NewJSONLFileEventCollection("events_from_remote_" + address.String() + ".jsonl")
+
+		remote_collection := file_event.NewJSONLFileEventCollection("events_from_remote_" + address.String() + ".jsonl",true)
 		err := remote_collection.FromBytes(eventsData)
 		if err != nil {
 			log.Printf("Error saving events from remote: %v\n", err)
@@ -65,16 +67,20 @@ func (t *TCPControllerTransportChannelHandler) OnMessage(channel peer_comunicati
 		}
 		log.Printf("Events from remote saved successfully in events_from_remote.jsonl")
 
-		local_collection := file_event.NewJSONLFileEventCollection("events.jsonl")
-		merged := local_collection.Merge(remote_collection)
+		local_collection := file_event.NewJSONLFileEventCollection("events.jsonl",false)
+		local_collection.Debug()
+		
+		remote_collection.Debug()
+		merged := remote_collection.Merge(local_collection)
+		merged.Debug()
 
 		//delete the remote collection file using os.Remove
-		err = os.Remove(remote_collection.FilePath)
+		/* err = os.Remove(remote_collection.FilePath)
 		if err != nil {
 			log.Printf("Error deleting remote collection file: %v\n", err)
 		} else {
 			log.Printf("Remote collection file %s deleted successfully", remote_collection.FilePath)
-		}
+		} */
 
 		if merged == nil {
 			log.Println("Error merging collections")

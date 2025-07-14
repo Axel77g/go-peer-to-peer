@@ -11,14 +11,20 @@ type JSONLFileEventCollection struct {
 	activeIterators atomic.Int32
 }
 
-func NewJSONLFileEventCollection(filePath string) *JSONLFileEventCollection {
+func NewJSONLFileEventCollection(filePath string, delete bool) *JSONLFileEventCollection {
+	if delete {
+		if _, err := os.Stat(filePath); err == nil {
+			os.Remove(filePath)
+		}
+	}
+
 	return &JSONLFileEventCollection{
 		FilePath: filePath,
 	}
 }
 
 func(c *JSONLFileEventCollection) FromBytes(bytes []byte) error {
-	file, err := os.OpenFile(c.FilePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+	file, err := os.OpenFile(c.FilePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		println("Error opening file:", err)
 	}
@@ -77,7 +83,7 @@ func (c *JSONLFileEventCollection) Merge(collectionB IFileEventCollection) IFile
 
 	// On crée une nouvelle collection temporaire
 	mergedPath := c.FilePath + "_merged.jsonl"
-	mergedCollection := NewJSONLFileEventCollection(mergedPath)
+	mergedCollection := NewJSONLFileEventCollection(mergedPath,true)
 
 	// Pour éviter les doublons
 	seen := make(map[string]struct{})
@@ -146,4 +152,36 @@ func (c *JSONLFileEventCollection) GetBytesSize() int64 {
 		return 0
 	}
 	return fileInfo.Size()
+}
+
+func (c *JSONLFileEventCollection) Debug() {
+	println("JSONLFileEventCollection Debug:")
+	println("FilePath:", c.FilePath)
+
+	fileInfo, err := os.Stat(c.FilePath)
+	if err != nil {
+		println("Error getting file info:", err)
+		return
+	}
+	println("File Size:", fileInfo.Size(), "bytes")
+	println("Active Iterators:", c.activeIterators.Load())
+
+	iterator := c.GetAll()
+	if iterator == nil {
+		println("No events found in collection.")
+		return
+	}
+	defer iterator.Close()
+
+	for iterator.Next() {
+		event, err := iterator.Current()
+		if err != nil {
+			println("Error reading event:", err.Error())
+			return
+		}
+		println("Event:", event.Hash)
+	}
+
+	println("End of JSONLFileEventCollection Debug\n")
+	
 }
