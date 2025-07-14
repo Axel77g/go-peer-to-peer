@@ -6,7 +6,6 @@ import (
 	"peer-to-peer/app/peer_comunication"
 	"peer-to-peer/app/shared"
 	"sync"
-	"time"
 )
 
 
@@ -18,7 +17,6 @@ func main() {
 	go tcpServer.Listen(&handlers.TCPControllerTransportChannelHandler{}) //open tcp server listener with the tcp handler
 
 	//attend 2 seconde
-	time.Sleep(2 * time.Second)
 	
 
 	udpServer := peer_comunication.GetUDPServerListener()
