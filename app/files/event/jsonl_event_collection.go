@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"peer-to-peer/app/shared"
 	"sync/atomic"
 )
 
@@ -47,7 +48,7 @@ func (c *JSONLFileEventCollection) OnIteratorClose() {
 	}
 }
 
-func (c *JSONLFileEventCollection) Append(event FileEvent) {
+func (c *JSONLFileEventCollection) Append(event shared.FileEvent) {
 	if c.activeIterators.Load() > 0 {
 		println("Error: Cannot append to collection while iterators are active")
 		return
@@ -94,8 +95,8 @@ func (c *JSONLFileEventCollection) Merge(collectionB IFileEventCollection) IFile
 	seen := make(map[string]struct{})
 
 	var (
-		eventA FileEvent
-		eventB FileEvent
+		eventA shared.FileEvent
+		eventB shared.FileEvent
 		hasA   = iteratorA.Next()
 		hasB   = iteratorB.Next()
 	)

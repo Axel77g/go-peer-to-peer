@@ -1,9 +1,8 @@
-package file_event
+package shared
 
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"peer-to-peer/app/shared"
 	"strconv"
 	"time"
 )
@@ -35,7 +34,7 @@ func generateHash(filePath string, timestamp uint64, eventType EventType) string
 	return hex.EncodeToString(hash[:])
 }
 
-func NewCreateFileEvent(file shared.IFile, eventType EventType) FileEvent {
+func NewCreateFileEvent(file IFile, eventType EventType) FileEvent {
 	timestamp := getCurrentTimestamp()
 	hash := generateHash(file.GetPath(), timestamp, eventType)
 	return FileEvent{
@@ -48,14 +47,14 @@ func NewCreateFileEvent(file shared.IFile, eventType EventType) FileEvent {
 	}
 }
 
-func NewCreateFileSystemEvent(file shared.IFile) FileEvent {
+func NewCreateFileSystemEvent(file IFile) FileEvent {
 	return NewCreateFileEvent(file, CreateEvent)
 }
 
-func NewUpdatedFileSystemEvent(file shared.IFile) FileEvent {
+func NewUpdatedFileSystemEvent(file IFile) FileEvent {
 	return NewCreateFileEvent(file, UpdateEvent)
 }
 
-func NewDeletedFileSystemEvent(file shared.IFile) FileEvent {
+func NewDeletedFileSystemEvent(file IFile) FileEvent {
 	return NewCreateFileEvent(file, DeleteEvent)
 }

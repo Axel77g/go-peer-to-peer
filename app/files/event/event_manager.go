@@ -3,6 +3,8 @@ package file_event
 import (
 	"fmt"
 	"log"
+	"peer-to-peer/app/peer_comunication"
+	"peer-to-peer/app/shared"
 	"sync"
 )
 
@@ -31,7 +33,7 @@ func GetEventManager() *EventManager {
 	return eventManagerInstance
 }
 
-func (m *EventManager) AppendEvent(event FileEvent) {
+func (m *EventManager) AppendEvent(event shared.FileEvent) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.collection.Append(event)
@@ -79,4 +81,12 @@ func (m *EventManager) SaveCollection() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return m.collection.SaveToFile("events.jsonl")
+}
+
+func (m *EventManager) BroadcastEvents() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	iterator := m.collection.GetAll("broadcasting events")
+	defer iterator.Close()
+	peer_comunication.BroadcastIterator([]byte("PUSH_EVENTS"), NewFileEventIteratorAdapter(iterator), "tcp")
 }

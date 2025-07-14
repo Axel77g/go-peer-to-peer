@@ -2,18 +2,19 @@ package peer_comunication
 
 import (
 	"log"
+	"peer-to-peer/app/shared"
 	"sync"
 )
 
 var (
-    peers = make(map[string]IPeer) //ip string to IPeer mapping
-    peersMutex = sync.Mutex{}
+	peers      = make(map[string]IPeer) //ip string to IPeer mapping
+	peersMutex = sync.Mutex{}
 )
 
-func GetPeerByAddress(address TransportAddress)  (IPeer, bool) {
+func GetPeerByAddress(address TransportAddress) (IPeer, bool) {
 	ip := address.GetIP().String()
 	peersMutex.Lock()
-    defer peersMutex.Unlock()
+	defer peersMutex.Unlock()
 	if peer, exists := peers[ip]; exists {
 		return peer, true
 	}
@@ -26,7 +27,7 @@ func RegisterTransportChannel(channel ITransportChannel) IPeer {
 	log.Printf("Register %s transport channel for address: %s\n", channel.GetProtocol(), address.String())
 
 	peersMutex.Lock()
-    defer peersMutex.Unlock()
+	defer peersMutex.Unlock()
 
 	if peer, exists := peers[ip]; exists {
 		peer.AddTransportChannel(channel)
@@ -61,6 +62,32 @@ func UnregisterTransportChannel(channel ITransportChannel) {
 	debug()
 }
 
+func BroadcastMessage(message []byte, protocol string) {
+	peersMutex.Lock()
+	defer peersMutex.Unlock()
+
+	for _, peer := range peers {
+		channels := peer.GetTransportsChannels()
+		channel, exists := channels.GetByType(protocol)
+		if exists {
+			channel.Send(message)
+		}
+	}
+}
+
+func BroadcastIterator(message []byte, iterator shared.Iterator, protocol string) {
+	peersMutex.Lock()
+	defer peersMutex.Unlock()
+
+	for _, peer := range peers {
+		channels := peer.GetTransportsChannels()
+		channel, exists := channels.GetByType(protocol)
+		if exists {
+			channel.SendIterator(message, iterator)
+		}
+	}
+}
+
 func AddPeer(peer IPeer) {
 	ip := peer.GetIP().String()
 	if _, exists := peers[ip]; !exists {
@@ -68,8 +95,8 @@ func AddPeer(peer IPeer) {
 	}
 }
 
-func debug(){
-	//for each peer log 
+func debug() {
+	//for each peer log
 	for _, peer := range peers {
 		log.Printf("[PMANAGE] Peer : %s", peer.String())
 	}

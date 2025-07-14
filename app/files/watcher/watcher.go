@@ -2,18 +2,18 @@ package file_watcher
 
 import (
 	"log"
-	file_event "peer-to-peer/app/files/event"
 	file_scanner "peer-to-peer/app/files/scanner"
+	"peer-to-peer/app/shared"
 	"time"
 )
 
 type Watcher struct {
 	DirectoryPath string
 	Cooldown      time.Duration
-	Events        chan file_event.FileEvent
+	Events        chan shared.FileEvent
 }
 
-func NewWatcher(dirPath string, cooldown time.Duration, event chan file_event.FileEvent) Watcher {
+func NewWatcher(dirPath string, cooldown time.Duration, event chan shared.FileEvent) Watcher {
 	return Watcher{
 		dirPath,
 		cooldown,

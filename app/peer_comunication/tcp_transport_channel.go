@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"net"
-	file_event "peer-to-peer/app/files/event"
 	"peer-to-peer/app/shared"
 	"time"
 )
@@ -68,7 +67,7 @@ func (t *TCPTransportChannel) SendIterator(message []byte, iterator shared.Itera
 			contentBytes = v
 		case string:
 			contentBytes = []byte(v)
-		case file_event.FileEvent:
+		case shared.FileEvent:
 			jsonBytes, err := json.Marshal(v)
 			if err != nil {
 				log.Printf("Error marshaling FileEvent to JSON: %v\n", err)

@@ -20,7 +20,7 @@ func (s *ShadowFile) GetChecksum() string {
 	return s.checksum
 }
 
-func NewShadowFileFromEvent(event FileEvent) *ShadowFile {
+func NewShadowFileFromEvent(event shared.FileEvent) *ShadowFile {
 	return &ShadowFile{
 		fileName: event.FileName,
 		filePath: event.FilePath,
@@ -38,11 +38,11 @@ func NewShadowFileFromEvent(event FileEvent) *ShadowFile {
 //
 //	directory - pointer to the ShadowDirectory to be modified.
 //	event     - the FileEvent describing the change to apply.
-func applyEventToDirectory(directory shared.IDirectory, event FileEvent) {
+func applyEventToDirectory(directory shared.IDirectory, event shared.FileEvent) {
 	switch event.EventType {
-	case CreateEvent:
+	case shared.CreateEvent:
 		directory.AddFile(NewShadowFileFromEvent(event))
-	case UpdateEvent:
+	case shared.UpdateEvent:
 		if file, exists := directory.GetFile(event.FileName); exists {
 			file.(*ShadowFile).checksum = event.FileChecksum
 		} else {
@@ -50,7 +50,7 @@ func applyEventToDirectory(directory shared.IDirectory, event FileEvent) {
 			println("Error: File not found in directory for update event:", event.FileName)
 			directory.AddFile(NewShadowFileFromEvent(event))
 		}
-	case DeleteEvent:
+	case shared.DeleteEvent:
 		directory.RemoveFile(event.FileName)
 	}
 }

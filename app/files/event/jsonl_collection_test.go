@@ -2,6 +2,7 @@ package file_event
 
 import (
 	"os"
+	"peer-to-peer/app/shared"
 	"testing"
 	"time"
 )
@@ -27,10 +28,10 @@ func TestJSONLFileEventCollection_Append_GetAll(t *testing.T) {
 	defer os.Remove(tmpFile)
 	collection := NewJSONLFileEventCollection(tmpFile, false)
 
-	event1 := NewCreateFileEvent(MockFile{
+	event1 := shared.NewCreateFileEvent(MockFile{
 		FilePath: "file1.txt",
 	}, 1)
-	event2 := NewCreateFileEvent(MockFile{
+	event2 := shared.NewCreateFileEvent(MockFile{
 		FilePath: "file2.txt",
 	}, 2)
 
@@ -40,7 +41,7 @@ func TestJSONLFileEventCollection_Append_GetAll(t *testing.T) {
 	it := collection.GetAll("test reason")
 	defer it.Close()
 
-	var events []FileEvent
+	var events []shared.FileEvent
 	for it.Next() {
 		e, err := it.Current()
 		if err != nil {
@@ -67,19 +68,19 @@ func TestJSONLFileEventCollection_Merge(t *testing.T) {
 	collectionB := NewJSONLFileEventCollection(tmpFileB, false)
 
 	// Événement en commun (même hash)
-	sharedEvent := NewCreateFileEvent(MockFile{
+	sharedEvent := shared.NewCreateFileEvent(MockFile{
 		FilePath: "shared.txt",
 	}, 1)
 
 	// Événements uniques
-	eventA := NewCreateFileEvent(MockFile{
+	eventA := shared.NewCreateFileEvent(MockFile{
 		FilePath: "onlyA.txt",
 	}, 1)
-	eventA2 := NewCreateFileEvent(MockFile{
+	eventA2 := shared.NewCreateFileEvent(MockFile{
 		FilePath: "onlyA2.txt",
 	}, 1)
 	time.Sleep(10 * time.Millisecond)
-	eventB := NewCreateFileEvent(MockFile{
+	eventB := shared.NewCreateFileEvent(MockFile{
 		FilePath: "onlyB.txt",
 	}, 1)
 

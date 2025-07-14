@@ -1,7 +1,10 @@
 package file_event
+
+import "peer-to-peer/app/shared"
+
 type IFileEventIterator interface {
 	Next() bool
-	Current() (FileEvent, error)
+	Current() (shared.FileEvent, error)
 	Reset() error
 	Go(int) error
 	Size() int

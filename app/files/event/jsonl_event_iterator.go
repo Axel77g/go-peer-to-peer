@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"os"
+	"peer-to-peer/app/shared"
 )
 
 type JSONLFileEventIterator struct {
@@ -59,14 +60,14 @@ func (j *JSONLFileEventIterator) Next() bool {
 	return false
 }
 
-func (j *JSONLFileEventIterator) Current() (FileEvent, error) {
+func (j *JSONLFileEventIterator) Current() (shared.FileEvent, error) {
 	if j.currentLine < 0 || j.currentLine >= j.size {
-		return FileEvent{}, os.ErrInvalid
+		return shared.FileEvent{}, os.ErrInvalid
 	}
 
-	var event FileEvent
+	var event shared.FileEvent
 	if err := json.Unmarshal([]byte(j.buffer), &event); err != nil {
-		return FileEvent{}, err
+		return shared.FileEvent{}, err
 	}
 	return event, nil
 }

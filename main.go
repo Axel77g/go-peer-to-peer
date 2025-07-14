@@ -26,14 +26,14 @@ func main() {
 
 	eventManager := file_event.GetEventManager()
 
-	dirChan := make(chan file_event.FileEvent, 100)
+	dirChan := make(chan shared.FileEvent, 100)
 	watcher := file_watcher.NewWatcher(shared.SHARED_DIRECTORY, time.Second*5, dirChan)
 	go watcher.Listen() //start the file watcher
 
 	go func() {
 		for event := range dirChan {
 			eventManager.AppendEvent(event)
-
+			eventManager.BroadcastEvents()
 		}
 	}()
 

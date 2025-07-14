@@ -63,13 +63,40 @@ func (t *TCPControllerTransportChannelHandler) OnMessage(channel peer_comunicati
 
 		address := channel.GetAddress()
 
-		remote_collection := file_event.NewJSONLFileEventCollection("events_from_remote_"+address.String()+".jsonl", true)
+		remote_collection := file_event.NewJSONLFileEventCollection("pull_events_from_remote_"+address.String()+".jsonl", true)
 		err := remote_collection.FromBytes(eventsData)
 		if err != nil {
 			log.Printf("Error saving events from remote: %v\n", err)
 			return err
 		}
 		log.Printf("Events from remote saved successfully in events_from_remote.jsonl")
+
+		err = eventManager.MergeAndSave(remote_collection)
+		if err != nil {
+			log.Printf("Error merging and saving events: %v\n", err)
+			eventManager.Unlock()
+			return err
+		}
+
+		return nil
+	}
+
+	/**
+		Someone push events to us, we merge it with our events and save it if change we broadcast it again
+	**/
+	pushEventResponseLen := len("PUSH_EVENTS")
+	if len(content) > pushEventResponseLen && stringContent[:pushEventResponseLen] == "PUSH_EVENTS" {
+		eventsData := content[pushEventResponseLen:]
+		log.Printf("Received push events data: %s\n", string(eventsData))
+
+		address := channel.GetAddress()
+		remote_collection := file_event.NewJSONLFileEventCollection("push_events_to_remote_"+address.String()+".jsonl", true)
+		err := remote_collection.FromBytes(eventsData)
+		if err != nil {
+			log.Printf("Error saving events to remote: %v\n", err)
+			return err
+		}
+		log.Printf("Events to remote saved successfully in events_to_remote.jsonl")
 
 		err = eventManager.MergeAndSave(remote_collection)
 		if err != nil {
