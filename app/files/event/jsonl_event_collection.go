@@ -76,7 +76,7 @@ func (c *JSONLFileEventCollection) Merge(collectionB IFileEventCollection) IFile
 	defer iteratorB.Close()
 
 	// On crée une nouvelle collection temporaire
-	mergedPath := c.FilePath + "_merged"
+	mergedPath := c.FilePath + "_merged.jsonl"
 	mergedCollection := NewJSONLFileEventCollection(mergedPath)
 
 	// Pour éviter les doublons
