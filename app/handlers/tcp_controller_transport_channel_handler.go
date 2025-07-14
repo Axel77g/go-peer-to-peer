@@ -63,7 +63,7 @@ func (t *TCPControllerTransportChannelHandler) OnMessage(channel peer_comunicati
 
 		address := channel.GetAddress()
 
-		remote_collection := file_event.NewJSONLFileEventCollection("pull_events_from_remote_"+address.String()+".jsonl", true)
+		remote_collection := file_event.NewJSONLFileEventCollection("pull_events_from_remote_"+address.GetIP().String()+".jsonl", true)
 		err := remote_collection.FromBytes(eventsData)
 		if err != nil {
 			log.Printf("Error saving events from remote: %v\n", err)
@@ -95,7 +95,7 @@ func (t *TCPControllerTransportChannelHandler) OnMessage(channel peer_comunicati
 		log.Printf("Received message PUSH_EVENTS, size: %d bytes\n", len(eventsData))
 
 		address := channel.GetAddress()
-		remote_collection := file_event.NewJSONLFileEventCollection("push_events_to_remote_"+address.String()+".jsonl", true)
+		remote_collection := file_event.NewJSONLFileEventCollection("push_events_to_remote_"+address.GetIP().String()+".jsonl", true)
 		err := remote_collection.FromBytes(eventsData)
 		if err != nil {
 			log.Printf("Error saving events to remote: %v\n", err)
