@@ -55,13 +55,22 @@ func (t *TCPControllerTransportChannelHandler) OnMessage(channel peer_comunicati
 	pullEventResponseLen := len("PULL_EVENTS_RESPONSE")
 	if len(content) > pullEventResponseLen && stringContent[:pullEventResponseLen] == "PULL_EVENTS_RESPONSE" {
 		eventsData := content[pullEventResponseLen:]
-		collection := file_event.NewJSONLFileEventCollection("events_from_remote.jsonl")
-		err := collection.FromBytes(eventsData)
+		address:= channel.GetAddress()
+		remote_collection := file_event.NewJSONLFileEventCollection("events_from_remote_" + address.String() + ".jsonl")
+		err := remote_collection.FromBytes(eventsData)
 		if err != nil {
 			log.Printf("Error saving events from remote: %v\n", err)
 			return err	
 		}
 		log.Printf("Events from remote saved successfully in events_from_remote.jsonl")
+
+		local_collection := file_event.NewJSONLFileEventCollection("events.jsonl")
+		merged := local_collection.Merge(remote_collection)
+
+		if merged == nil {
+			log.Println("Error merging collections")
+		}
+
 		return nil
 	}
 
