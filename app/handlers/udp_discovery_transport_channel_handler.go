@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-type UDPDiscoveryTransportChannel struct {}
+type UDPDiscoveryTransportChannel struct{}
 
 func (u *UDPDiscoveryTransportChannel) OnClose(channel peer_comunication.ITransportChannel) {
 	peer_comunication.UnregisterTransportChannel(channel)
@@ -25,35 +25,34 @@ func (u *UDPDiscoveryTransportChannel) OnMessage(channel peer_comunication.ITran
 	parts := strings.Split(messageContent, ":")
 
 	if len(parts) > 1 {
-			if parts[1] == fmt.Sprintf("%d", shared.SOCKET_ID){
-				/* log.Printf(
-					"Message from the same socket ID (%d) ignored: %s\n", shared.SOCKET_ID, messageContent) */
-				return nil // Ignore the message if it is from the same socket ID
-			}
-			if parts[0] == "DISCOVER_PEER_REQUEST" {
-				address := channel.GetAddress()
-				log.Printf("Discovery request received from %s: %s\n", address.String(), messageContent)
-				
-				peer, existsPeer := peer_comunication.GetPeerByAddress(address)
-				if !existsPeer {
-					peer_comunication.RegisterTransportChannel(channel)
-				    createTCPConnectionForIP(address.GetIP())
-				}else{
-					_, existsUDP := peer.GetTransportsChannels().GetByAddress(address)
-					if !existsUDP {
-						peer_comunication.RegisterTransportChannel(channel)
-					}
-
-					_, exits := peer.GetTransportsChannels().GetByType("tcp")
-					//si aucune connection TCP n'existe pas, on en crée une a la reception d'une discovery request
-					if !exits {
-						createTCPConnectionForIP(peer.GetIP())
-					}
-				}
-				
-				
-			}
+		if parts[1] == fmt.Sprintf("%d", shared.SOCKET_ID) {
+			/* log.Printf(
+			"Message from the same socket ID (%d) ignored: %s\n", shared.SOCKET_ID, messageContent) */
+			return nil // Ignore the message if it is from the same socket ID
 		}
+		if parts[0] == "DISCOVER_PEER_REQUEST" {
+			address := channel.GetAddress()
+			//log.Printf("Discovery request received from %s: %s\n", address.String(), messageContent)
+
+			peer, existsPeer := peer_comunication.GetPeerByAddress(address)
+			if !existsPeer {
+				peer_comunication.RegisterTransportChannel(channel)
+				createTCPConnectionForIP(address.GetIP())
+			} else {
+				_, existsUDP := peer.GetTransportsChannels().GetByAddress(address)
+				if !existsUDP {
+					peer_comunication.RegisterTransportChannel(channel)
+				}
+
+				_, exits := peer.GetTransportsChannels().GetByType("tcp")
+				//si aucune connection TCP n'existe pas, on en crée une a la reception d'une discovery request
+				if !exits {
+					createTCPConnectionForIP(peer.GetIP())
+				}
+			}
+
+		}
+	}
 
 	return nil
 }

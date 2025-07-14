@@ -20,9 +20,9 @@ type FileEvent struct {
 	Hash         string
 	Timestamp    uint64
 	EventType    EventType
-	FileName	string
+	FileName     string
 	FilePath     string
-	FileChecksum *string
+	FileChecksum string
 }
 
 func getCurrentTimestamp() uint64 {
@@ -39,11 +39,11 @@ func NewCreateFileEvent(file shared.IFile, eventType EventType) FileEvent {
 	timestamp := getCurrentTimestamp()
 	hash := generateHash(file.GetPath(), timestamp, eventType)
 	return FileEvent{
-		Hash:      hash,
-		Timestamp: timestamp,
-		EventType: eventType,
-		FileName:  file.GetPath(),
-		FilePath:  file.GetPath(),
+		Hash:         hash,
+		Timestamp:    timestamp,
+		EventType:    eventType,
+		FileName:     file.GetPath(),
+		FilePath:     file.GetPath(),
 		FileChecksum: file.GetChecksum(),
 	}
 }

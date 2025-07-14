@@ -2,6 +2,7 @@ package file_event
 
 import (
 	"encoding/json"
+	"log"
 	"os"
 	"sync/atomic"
 )
@@ -39,6 +40,7 @@ func (c *JSONLFileEventCollection) FromBytes(bytes []byte) error {
 }
 
 func (c *JSONLFileEventCollection) OnIteratorClose() {
+	println("Closing iterator")
 	current := c.activeIterators.Add(-1)
 	if current < 0 {
 		c.activeIterators.Store(0)
@@ -52,8 +54,10 @@ func (c *JSONLFileEventCollection) Append(event FileEvent) {
 	}
 
 	file, err := os.OpenFile(c.FilePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+	log.Println("Appending event:", event, "to file:", c.FilePath, "Active Iterators:", c.activeIterators.Load())
+
 	if err != nil {
-		println("Error opening file:", err)
+		log.Println("Error opening file:", err)
 		return
 	}
 	defer file.Close()
@@ -64,7 +68,8 @@ func (c *JSONLFileEventCollection) Append(event FileEvent) {
 	}
 }
 
-func (c *JSONLFileEventCollection) GetAll() IFileEventIterator {
+func (c *JSONLFileEventCollection) GetAll(reason string) IFileEventIterator {
+	println("Getting all events from collection for reason:", reason, "FilePath:", c.FilePath)
 	c.activeIterators.Add(1)
 	iterator, err := NewJSONLFileEventIterator(c.FilePath, c)
 	if err != nil {
@@ -76,8 +81,8 @@ func (c *JSONLFileEventCollection) GetAll() IFileEventIterator {
 
 func (c *JSONLFileEventCollection) Merge(collectionB IFileEventCollection) IFileEventCollection {
 	//redigier ici la merge logic
-	iteratorA := c.GetAll()
-	iteratorB := collectionB.GetAll()
+	iteratorA := c.GetAll("merging events")
+	iteratorB := collectionB.GetAll("merging events")
 	defer iteratorA.Close()
 	defer iteratorB.Close()
 
@@ -166,12 +171,12 @@ func (c *JSONLFileEventCollection) Debug() {
 	println("File Size:", fileInfo.Size(), "bytes")
 	println("Active Iterators:", c.activeIterators.Load())
 
-	iterator := c.GetAll()
+	iterator := c.GetAll("debugging")
+	defer iterator.Close()
 	if iterator == nil {
 		println("No events found in collection.")
 		return
 	}
-	defer iterator.Close()
 
 	for iterator.Next() {
 		event, err := iterator.Current()
@@ -195,9 +200,9 @@ func (c *JSONLFileEventCollection) SaveToFile(filePath string) error {
 	defer file.Close()
 
 	encoder := json.NewEncoder(file)
-	iterator := c.GetAll()
+	iterator := c.GetAll("Saving to file")
+	defer iterator.Close()
 	defer func() {
-		iterator.Close()
 		if err := os.Remove(c.FilePath); err != nil {
 			println("Error removing old file:", err)
 		}

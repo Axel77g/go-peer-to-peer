@@ -34,19 +34,23 @@ func (t *TCPControllerTransportChannelHandler) OnMessage(channel peer_comunicati
 	content := message.GetContent()
 	stringContent := string(content)
 
+	eventManager := file_event.GetEventManager()
+
 	if stringContent == "PULL_EVENTS_REQUEST" {
-		collection := file_event.NewJSONLFileEventCollection("events.jsonl", false)
+		eventManager.Lock()
+		collection := eventManager.GetCollection()
 		size := collection.GetBytesSize()
 		log.Printf("Sending events to remote peer, size: %d bytes\n", size)
-		iterator := collection.GetAll()
+		iterator := collection.GetAll("pulling events")
+		defer iterator.Close()
 		if iterator == nil {
 			log.Println("No events found to send.")
 			return nil
 		}
-		defer iterator.Close()
 		adapter := file_event.NewFileEventIteratorAdapter(iterator)
 		messageContent := []byte("PULL_EVENTS_RESPONSE")
 		channel.SendIterator(messageContent, adapter)
+		eventManager.Unlock()
 		log.Printf("Sent events to remote peer, size: %d bytes\n", size)
 		return nil
 	}
@@ -67,17 +71,12 @@ func (t *TCPControllerTransportChannelHandler) OnMessage(channel peer_comunicati
 		}
 		log.Printf("Events from remote saved successfully in events_from_remote.jsonl")
 
-		local_collection := file_event.NewJSONLFileEventCollection("events.jsonl", false)
-
-		merged := remote_collection.Merge(local_collection)
-
-		if merged == nil {
-			log.Println("Error merging collections")
+		err = eventManager.MergeAndSave(remote_collection)
+		if err != nil {
+			log.Printf("Error merging and saving events: %v\n", err)
+			eventManager.Unlock()
+			return err
 		}
-
-		//set the merged collection as the new local collection
-
-		merged.SaveToFile("events.jsonl")
 
 		return nil
 	}

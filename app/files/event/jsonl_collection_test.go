@@ -18,9 +18,8 @@ func (m MockFile) GetName() string {
 	return m.FilePath
 }
 
-func (m MockFile) GetChecksum() *string {
-	checksum := "mocked_checksum"
-	return &checksum
+func (m MockFile) GetChecksum() string {
+	return "mocked_checksum"
 }
 
 func TestJSONLFileEventCollection_Append_GetAll(t *testing.T) {
@@ -38,7 +37,7 @@ func TestJSONLFileEventCollection_Append_GetAll(t *testing.T) {
 	collection.Append(event1)
 	collection.Append(event2)
 
-	it := collection.GetAll()
+	it := collection.GetAll("test reason")
 	defer it.Close()
 
 	var events []FileEvent
@@ -96,7 +95,7 @@ func TestJSONLFileEventCollection_Merge(t *testing.T) {
 	mergedPath := merged.(*JSONLFileEventCollection).FilePath
 	defer os.Remove(mergedPath)
 
-	it := merged.GetAll()
+	it := merged.GetAll("test merge")
 	defer it.Close()
 
 	hashSet := make(map[string]struct{})
@@ -118,7 +117,7 @@ func TestJSONLFileEventCollection_Merge(t *testing.T) {
 	}
 
 	//assert that last merged is the hash of B
-	it = merged.GetAll()
+	it = merged.GetAll("test merge")
 	defer it.Close()
 	it.Go(it.Size() - 1)
 	lastEvent, err := it.Current()

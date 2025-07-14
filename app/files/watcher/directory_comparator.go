@@ -9,7 +9,7 @@ func CompareDirectories(a, b shared.IDirectory) []file_event.FileEvent {
 	events := []file_event.FileEvent{}
 	for fileNameA, fileA := range a.GetFiles() {
 		if b.HasFile(fileNameA) {
-			fileB,_ := b.GetFile(fileNameA);
+			fileB, _ := b.GetFile(fileNameA)
 			if fileB.GetChecksum() != fileA.GetChecksum() { //file updated event
 				events = append(events, file_event.NewUpdatedFileSystemEvent(fileA))
 				continue

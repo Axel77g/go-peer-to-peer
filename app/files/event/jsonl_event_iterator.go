@@ -44,7 +44,7 @@ func NewJSONLFileEventIterator(filePath string, collection *JSONLFileEventCollec
 		size:        lineCount,
 		file:        file,
 		scanner:     bufio.NewScanner(file),
-		collection: collection,
+		collection:  collection,
 	}, nil
 }
 
@@ -96,12 +96,13 @@ func (j *JSONLFileEventIterator) Go(index int) error {
 }
 
 func (j *JSONLFileEventIterator) Close() error {
+	println("Closing JSONLFileEventIterator for file:", j.filePath, j.file != nil)
+	defer j.collection.OnIteratorClose()
 	if j.file != nil {
 		err := j.file.Close()
 		j.file = nil
 		return err
 	}
-	j.collection.OnIteratorClose()
 	return nil
 }
 

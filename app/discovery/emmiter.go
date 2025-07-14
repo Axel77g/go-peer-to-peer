@@ -20,7 +20,7 @@ func discoveryRequestSender(socketID int, ip net.IP) {
 		log.Println("Failed to create UDP transport channel")
 		return
 	}
-		
+
 	message := []byte("DISCOVER_PEER_REQUEST:" + fmt.Sprintf("%d", socketID))
 	err := transportChannel.Send(message)
 	if err != nil {
@@ -30,7 +30,7 @@ func discoveryRequestSender(socketID int, ip net.IP) {
 }
 
 func sender(networkInterfaceManager *NetworkInterfaceManager, socketID int) {
-	log.Printf("Sending discovery request to all available IP interfaces with socket ID %d\n", socketID)
+	//log.Printf("Sending discovery request to all available IP interfaces with socket ID %d\n", socketID)
 	for _, ip := range networkInterfaceManager.AvailableIpInterface {
 		broadcastAddr := ip.getBroadcastAddress()
 		discoveryRequestSender(socketID, broadcastAddr)
