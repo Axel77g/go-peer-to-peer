@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"log"
+	"os"
 	file_event "peer-to-peer/app/files/event"
 	"peer-to-peer/app/peer_comunication"
 	"peer-to-peer/app/shared"
@@ -66,6 +67,14 @@ func (t *TCPControllerTransportChannelHandler) OnMessage(channel peer_comunicati
 
 		local_collection := file_event.NewJSONLFileEventCollection("events.jsonl")
 		merged := local_collection.Merge(remote_collection)
+
+		//delete the remote collection file using os.Remove
+		err = os.Remove(remote_collection.FilePath)
+		if err != nil {
+			log.Printf("Error deleting remote collection file: %v\n", err)
+		} else {
+			log.Printf("Remote collection file %s deleted successfully", remote_collection.FilePath)
+		}
 
 		if merged == nil {
 			log.Println("Error merging collections")
