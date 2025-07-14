@@ -108,7 +108,7 @@ Les événements sont stockés dans un **fichier JSONL**, ce qui permet des opé
 L'application est conçue selon plusieurs principes clés :
 
   * **Abstraction :** Les couches réseau et de stockage sont abstraites derrière des interfaces.
-  * **Modularité :** Les composants sont découplés et peuvent être remplacés indépendamment.
+  * **Modularité :** Les composants sont découplés et peuvent être remplacés indépendamment (exemple l'event collection peut ne pas dépendre du JSONL, il peut même y avoir une cohabitation).
   * **Indépendance du protocole :** La logique métier est séparée des mécanismes de transport.
   * **Event-Sourcing :** Tous les changements sont suivis comme des événements immuables dans un journal en mode "append-only".
 
