@@ -8,17 +8,30 @@ import (
 
 type JSONLFileEventCollection struct {
 	FilePath        string
+	FileMode        int
 	activeIterators atomic.Int32
 }
 
-func NewJSONLFileEventCollection(filePath string) *JSONLFileEventCollection {
+func NewJSONLFileEventCollection(filePath string, mode ...int) *JSONLFileEventCollection {
+	fileMode := os.O_APPEND | os.O_WRONLY | os.O_CREATE
+	if len(mode) > 0 {
+		if len(mode) == 1 {
+			fileMode = mode[0]
+		} else {
+			fileMode = 0
+			for _, m := range mode {
+				fileMode |= m
+			}
+		}
+	}
 	return &JSONLFileEventCollection{
 		FilePath: filePath,
+		FileMode: fileMode,
 	}
 }
 
 func(c *JSONLFileEventCollection) FromBytes(bytes []byte) error {
-	file, err := os.OpenFile(c.FilePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+	file, err := os.OpenFile(c.FilePath, c.FileMode, 0644)
 	if err != nil {
 		println("Error opening file:", err)
 	}
@@ -45,7 +58,7 @@ func (c *JSONLFileEventCollection) Append(event FileEvent) {
 		return
 	}
 
-	file, err := os.OpenFile(c.FilePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+	file, err := os.OpenFile(c.FilePath, c.FileMode, 0644)
 	if err != nil {
 		println("Error opening file:", err)
 		return
@@ -77,7 +90,7 @@ func (c *JSONLFileEventCollection) Merge(collectionB IFileEventCollection) IFile
 
 	// On crée une nouvelle collection temporaire
 	mergedPath := c.FilePath + "_merged.jsonl"
-	mergedCollection := NewJSONLFileEventCollection(mergedPath)
+	mergedCollection := NewJSONLFileEventCollection(mergedPath,os.O_WRONLY, os.O_CREATE)
 
 	// Pour éviter les doublons
 	seen := make(map[string]struct{})
