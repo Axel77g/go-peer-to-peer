@@ -1,3 +1,12 @@
+/*
+*
+
+---------ATTENTION----------
+Code non utilisé pour le moment
+
+*
+*/
+
 package filetransfering
 
 import (

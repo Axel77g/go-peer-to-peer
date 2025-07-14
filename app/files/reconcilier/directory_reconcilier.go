@@ -1,3 +1,11 @@
+/*
+*
+
+---------ATTENTION----------
+Code non utilisé pour le moment
+
+*
+*/
 package file_reconcilier
 
 import "peer-to-peer/app/shared"
