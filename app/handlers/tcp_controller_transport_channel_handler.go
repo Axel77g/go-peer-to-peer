@@ -77,6 +77,8 @@ func (t *TCPControllerTransportChannelHandler) OnMessage(channel peer_comunicati
 
 		//set the merged collection as the new local collection
 
+		merged.SaveToFile("events.jsonl")
+
 		return nil
 	}
 
