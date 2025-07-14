@@ -9,20 +9,20 @@ import (
 )
 
 type UDPTransportChannel struct {
-	listener *UDPServerListener
-	address TransportAddress
+	listener        *UDPServerListener
+	address         TransportAddress
 	lastMessageTime time.Time
-	monitorOnce      sync.Once
-	eventHandler ITransportChannelHandler // Handler for transport channel events
+	monitorOnce     sync.Once
+	eventHandler    ITransportChannelHandler // Handler for transport channel events
 }
 
 func NewUDPTransportChannel(address TransportAddress, handler ITransportChannelHandler) *UDPTransportChannel {
 	listener := GetUDPServerListener() //get the udp listener singleton
 	channel := &UDPTransportChannel{
-		listener: listener,
-		address:  address,
+		listener:        listener,
+		address:         address,
 		lastMessageTime: time.Now(),
-		eventHandler: handler,
+		eventHandler:    handler,
 	}
 	handler.OnOpen(channel) // Notify the handler that the channel is opened
 	return channel
@@ -55,7 +55,6 @@ func (u *UDPTransportChannel) Send(content []byte) error {
 	return nil
 }
 
-
 func (u *UDPTransportChannel) Close() error {
 	// UDP does not have a close method like TCP, but we can return nil
 	u.eventHandler.OnClose(u)
@@ -78,7 +77,6 @@ func (u *UDPTransportChannel) CollectMessage(message TransportMessage) error {
 	return nil
 }
 
-
 func (u *UDPTransportChannel) GetProtocol() string {
 	return "udp"
 }
@@ -88,9 +86,9 @@ func (u *UDPTransportChannel) IsAlive() bool {
 	return time.Since(u.lastMessageTime) < 8*time.Second // Consider alive if last message was received within 30 seconds
 }
 
-func (u *UDPTransportChannel) SendIterator(size uint32,message []byte, iterator shared.Iterator) error {
+func (u *UDPTransportChannel) SendIterator(message []byte, iterator shared.Iterator) error {
 	// UDP doesn't support iterators in the same way as TCP
 	// This is a simplified implementation - you might want to implement chunking
-	log.Printf("Warning: SendIterator on UDP is not fully implemented - size: %d", size)
+	log.Printf("Warning: SendIterator on UDP is not fully implemented")
 	return nil
 }

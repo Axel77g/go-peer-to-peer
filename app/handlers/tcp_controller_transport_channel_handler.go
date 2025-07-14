@@ -35,7 +35,7 @@ func (t *TCPControllerTransportChannelHandler) OnMessage(channel peer_comunicati
 	stringContent := string(content)
 
 	if stringContent == "PULL_EVENTS_REQUEST" {
-		collection := file_event.NewJSONLFileEventCollection("events.jsonl",false)
+		collection := file_event.NewJSONLFileEventCollection("events.jsonl", false)
 		size := collection.GetBytesSize()
 		log.Printf("Sending events to remote peer, size: %d bytes\n", size)
 		iterator := collection.GetAll()
@@ -46,7 +46,7 @@ func (t *TCPControllerTransportChannelHandler) OnMessage(channel peer_comunicati
 		defer iterator.Close()
 		adapter := file_event.NewFileEventIteratorAdapter(iterator)
 		messageContent := []byte("PULL_EVENTS_RESPONSE")
-		channel.SendIterator(uint32(size), messageContent, adapter)
+		channel.SendIterator(messageContent, adapter)
 		log.Printf("Sent events to remote peer, size: %d bytes\n", size)
 		return nil
 	}
@@ -57,19 +57,19 @@ func (t *TCPControllerTransportChannelHandler) OnMessage(channel peer_comunicati
 		eventsData := content[pullEventResponseLen:]
 		log.Printf("Received message content: %s\n", string(eventsData))
 
-		address:= channel.GetAddress()
+		address := channel.GetAddress()
 
-		remote_collection := file_event.NewJSONLFileEventCollection("events_from_remote_" + address.String() + ".jsonl",true)
+		remote_collection := file_event.NewJSONLFileEventCollection("events_from_remote_"+address.String()+".jsonl", true)
 		err := remote_collection.FromBytes(eventsData)
 		if err != nil {
 			log.Printf("Error saving events from remote: %v\n", err)
-			return err	
+			return err
 		}
 		log.Printf("Events from remote saved successfully in events_from_remote.jsonl")
 
-		local_collection := file_event.NewJSONLFileEventCollection("events.jsonl",false)
+		local_collection := file_event.NewJSONLFileEventCollection("events.jsonl", false)
 		local_collection.Debug()
-		
+
 		remote_collection.Debug()
 		merged := remote_collection.Merge(local_collection)
 		merged.Debug()

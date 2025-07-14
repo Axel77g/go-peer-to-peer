@@ -7,7 +7,7 @@ type ITransportChannel interface {
 	GetPort() int
 	GetAddress() TransportAddress
 	Send(content []byte) error
-	SendIterator(size uint32, message []byte, iterator shared.Iterator) error
+	SendIterator(message []byte, iterator shared.Iterator) error
 	CollectMessage(TransportMessage) error
 	Close() error
 	IsAlive() bool

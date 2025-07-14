@@ -48,65 +48,67 @@ func (t *TCPTransportChannel) Send(content []byte) error {
 	return nil
 }
 
-func (t *TCPTransportChannel) SendIterator(size uint32, message []byte, iterator shared.Iterator) error {
-    // Préparer un buffer pour tout le contenu
-    totalSize := 4 + uint32(len(message)) // 4 bytes pour la taille + message initial
-    
-    // Calculer la taille totale en parcourant l'iterator une première fois
-    var contents [][]byte
-    for iterator.Next() {
-        content, err := iterator.Current()
-        if err != nil {
-            log.Printf("Error getting current content from iterator: %v\n", err)
-            return fmt.Errorf("failed to get current content from iterator: %w", err)
-        }
-        
-        // Convert any to bytes
-        var contentBytes []byte
-        switch v := content.(type) {
-        case []byte:
-            contentBytes = v
-        case string:
-            contentBytes = []byte(v)
-        case file_event.FileEvent:
-            jsonBytes, err := json.Marshal(v)
-            if err != nil {
-                log.Printf("Error marshaling FileEvent to JSON: %v\n", err)
+func (t *TCPTransportChannel) SendIterator(message []byte, iterator shared.Iterator) error {
+	// Calculer la taille des données (sans inclure les 4 bytes d'en-tête)
+	messageSize := uint32(len(message))
+	iteratorSize := uint32(0)
+	// Calculer la taille totale en parcourant l'iterator une première fois
+	var contents [][]byte
+	for iterator.Next() {
+		content, err := iterator.Current()
+		if err != nil {
+			log.Printf("Error getting current content from iterator: %v\n", err)
+			return fmt.Errorf("failed to get current content from iterator: %w", err)
+		}
+
+		// Convert any to bytes
+		var contentBytes []byte
+		switch v := content.(type) {
+		case []byte:
+			contentBytes = v
+		case string:
+			contentBytes = []byte(v)
+		case file_event.FileEvent:
+			jsonBytes, err := json.Marshal(v)
+			if err != nil {
+				log.Printf("Error marshaling FileEvent to JSON: %v\n", err)
 				contentBytes = []byte(fmt.Sprintf("%v\n", v))
-            } else {
-				contentBytes = append(jsonBytes, '\n')
-            }
-        default:
-            contentBytes = []byte(fmt.Sprintf("%v", v))
-        }
-        
-        contents = append(contents, contentBytes)
-        totalSize += uint32(len(contentBytes))
-    }
-    
-    // Créer le buffer final
-    buffer := make([]byte, 0, totalSize)
-    
-    // Ajouter la taille totale
-    sizeBytes := make([]byte, 4)
-    binary.BigEndian.PutUint32(sizeBytes, totalSize-4) // -4 car on n'inclut pas les 4 bytes de taille dans la taille
-    buffer = append(buffer, sizeBytes...)
-    
-    // Ajouter le message initial
-    buffer = append(buffer, message...)
-    
-    // Ajouter tout le contenu de l'iterator
-    for _, contentBytes := range contents {
-        buffer = append(buffer, contentBytes...)
-    }
-    
-    // Envoyer tout en un seul Write
-    _, err := t.conn.Write(buffer)
-    if err != nil {
-        return fmt.Errorf("failed to send content: %w", err)
-    }
-    
-    return nil
+			} else {
+				contentBytes = append(jsonBytes, "\n"...)
+			}
+		default:
+			contentBytes = []byte(fmt.Sprintf("%v", v))
+		}
+
+		contents = append(contents, contentBytes)
+		iteratorSize += uint32(len(contentBytes))
+	}
+
+	dataSize := messageSize + iteratorSize
+	// Taille totale = taille des données + 4 bytes pour l'en-tête
+	totalSize := 4 + dataSize
+	buffer := make([]byte, 0, totalSize)
+
+	// Set la taille des données dans les 4 premiers bytes
+	sizeBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(sizeBytes, dataSize)
+	buffer = append(buffer, sizeBytes...)
+
+	// Ajouter le message initial
+	buffer = append(buffer, message...)
+
+	// Ajouter tout le contenu de l'iterator
+	for _, contentBytes := range contents {
+		buffer = append(buffer, contentBytes...)
+	}
+
+	// Envoyer tout en un seul Write
+	_, err := t.conn.Write(buffer)
+	if err != nil {
+		return fmt.Errorf("failed to send content: %w", err)
+	}
+
+	return nil
 }
 
 func (t *TCPTransportChannel) CollectMessage(message TransportMessage) error {
