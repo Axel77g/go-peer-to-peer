@@ -71,7 +71,7 @@ func (t *TCPTransportChannel) SendIterator(size uint32, message []byte, iterator
             jsonBytes, err := json.Marshal(v)
             if err != nil {
                 log.Printf("Error marshaling FileEvent to JSON: %v\n", err)
-                contentBytes = []byte(fmt.Sprintf("%v", v))
+				contentBytes = []byte(fmt.Sprintf("%v\n", v))
             } else {
                 contentBytes = jsonBytes
             }
