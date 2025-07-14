@@ -23,7 +23,6 @@ func (m MockFile) GetChecksum() *string {
 	return &checksum
 }
 
-
 func TestJSONLFileEventCollection_Append_GetAll(t *testing.T) {
 	tmpFile := "test_events_A.jsonl"
 	defer os.Remove(tmpFile)
@@ -65,8 +64,8 @@ func TestJSONLFileEventCollection_Merge(t *testing.T) {
 	tmpFileB := "test_events_B.jsonl"
 	defer os.Remove(tmpFileA)
 	defer os.Remove(tmpFileB)
-	collectionA := NewJSONLFileEventCollection(tmpFileA,false)
-	collectionB := NewJSONLFileEventCollection(tmpFileB,false)
+	collectionA := NewJSONLFileEventCollection(tmpFileA, false)
+	collectionB := NewJSONLFileEventCollection(tmpFileB, false)
 
 	// Événement en commun (même hash)
 	sharedEvent := NewCreateFileEvent(MockFile{
@@ -94,7 +93,6 @@ func TestJSONLFileEventCollection_Merge(t *testing.T) {
 
 	// On merge les deux
 	merged := collectionA.Merge(collectionB)
-	merged.Debug()
 	mergedPath := merged.(*JSONLFileEventCollection).FilePath
 	defer os.Remove(mergedPath)
 
