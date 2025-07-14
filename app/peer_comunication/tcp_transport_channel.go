@@ -73,7 +73,7 @@ func (t *TCPTransportChannel) SendIterator(size uint32, message []byte, iterator
                 log.Printf("Error marshaling FileEvent to JSON: %v\n", err)
 				contentBytes = []byte(fmt.Sprintf("%v\n", v))
             } else {
-                contentBytes = jsonBytes
+				contentBytes = append(jsonBytes, '\n')
             }
         default:
             contentBytes = []byte(fmt.Sprintf("%v", v))
