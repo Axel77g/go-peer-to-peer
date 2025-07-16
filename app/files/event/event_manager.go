@@ -25,7 +25,7 @@ func GetEventManager() *EventManager {
 		// Initialize the collection. Load existing events if the file exists.
 		// The second argument 'false' means it will attempt to load from the file.
 
-		fileName := "events.jsonl"
+		fileName := shared.EVENT_COLLECTION_FILE
 		//create the file if it does not exist
 		if _, err := os.Stat(fileName); os.IsNotExist(err) {
 			f, err := os.Create(fileName)
