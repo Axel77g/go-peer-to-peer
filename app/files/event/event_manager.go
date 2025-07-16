@@ -3,6 +3,7 @@ package file_event
 import (
 	"fmt"
 	"log"
+	"os"
 	"peer-to-peer/app/peer_comunication"
 	"peer-to-peer/app/shared"
 	"sync"
@@ -23,7 +24,18 @@ func GetEventManager() *EventManager {
 	once.Do(func() {
 		// Initialize the collection. Load existing events if the file exists.
 		// The second argument 'false' means it will attempt to load from the file.
-		collection := NewJSONLFileEventCollection("events.jsonl", false)
+
+		fileName := "events.jsonl"
+		//create the file if it does not exist
+		if _, err := os.Stat(fileName); os.IsNotExist(err) {
+			f, err := os.Create(fileName)
+			if err != nil {
+				log.Fatalf("Failed to create events file: %v", err)
+			}
+			f.Close()
+		}
+
+		collection := NewJSONLFileEventCollection(fileName, false)
 
 		eventManagerInstance = &EventManager{
 			collection: collection,

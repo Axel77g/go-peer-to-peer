@@ -1,8 +1,33 @@
 # Go Peer-to-Peer File Synchronization
 
+> Lien du repo : https://github.com/Axel77g/go-peer-to-peer
+
 ### Vue d'ensemble
 
 Cette application est un **système de synchronisation de fichiers de pair à pair** qui permet à plusieurs pairs de synchroniser le contenu d'un répertoire partagé. Sa conception est similaire à celle de Git, où les changements de fichiers sont suivis comme des événements dans un historique, ce qui permet une synchronisation efficace au sein d'un réseau distribué.
+
+# Lancement rapide
+### Prérequis
+
+- Deux ordinateurs avec **Go** installé (version 1.18 ou supérieure recommandée).
+- Assurez-vous que les pare-feux autorisent les connexions **UDP** et **TCP** sur le réseau local.
+  - **Attention :** Sur Windows, vérifiez que le pare-feu ne bloque pas l’application. Sur macOS, assurez-vous que le coupe-feu est désactivé ou que l’application est autorisée.
+  - Le réseau local ne doit pas être bloqué par des politiques personnalisées (exemple : *Campus Erard*).
+
+### Lancement de l’application
+
+Sur chaque ordinateur, ouvrez un terminal dans le dossier du projet et lancez :
+
+```bash
+go run main.go
+```
+
+Les deux ordinateurs devraient se détecter automatiquement.  
+Vous pouvez ensuite modifier, créer ou supprimer des fichiers dans le dossier [`./shared`](./shared/) (généré automatiquement au lancement).  
+La synchronisation des événements sera visible dans [`./events.jsonl`](./events.jsonl).
+
+
+
 
 -----
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"peer-to-peer/app/discovery"
 	file_event "peer-to-peer/app/files/event"
 	file_watcher "peer-to-peer/app/files/watcher"
@@ -14,6 +15,8 @@ import (
 func main() {
 	wg := sync.WaitGroup{}
 	wg.Add(6)
+
+	os.MkdirAll(shared.SHARED_DIRECTORY, os.ModePerm)
 
 	tcpServer := peer_comunication.NewTCPServer(shared.TCPPort)
 	go tcpServer.Listen(&handlers.TCPControllerTransportChannelHandler{}) //open tcp server listener with the tcp handler
