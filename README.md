@@ -1,6 +1,7 @@
 # Go Peer-to-Peer File Synchronization
 
 > Lien du repo : https://github.com/Axel77g/go-peer-to-peer
+> Lien présentation https://docs.google.com/presentation/d/1kEGpoJS19hbZO0XidA5cflE7A8PdfhAqCd6JQrOz954/edit?usp=sharing
 
 ### Vue d'ensemble
 
